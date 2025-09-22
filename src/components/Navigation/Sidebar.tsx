@@ -18,8 +18,21 @@ import {
   Settings,
   User,
   HelpCircle,
-  Zap,
-  Award
+  Award,
+  Folder,
+  Activity,
+  Heart,
+  BookMarked,
+  MapPin,
+  Film,
+  Users,
+  FileText,
+  PenTool,
+  StickyNote,
+  Music,
+  Grid3x3,
+  Circle,
+  Upload
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,37 +41,57 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
-  const mainNavItems = [
+  // Área Pessoal - Personal Area
+  const personalAreaItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, badge: null },
-    { id: 'tasks', label: 'Tarefas', icon: CheckCircle2, badge: '8' },
-    { id: 'habits', label: 'Hábitos', icon: Target, badge: null },
-    { id: 'notes', label: 'Segundo Cérebro', icon: Brain, badge: null },
-    { id: 'pomodoro', label: 'Pomodoro', icon: Timer, badge: null },
-    { id: 'calendar', label: 'Agenda', icon: Calendar, badge: '3' },
+    { id: 'goals', label: 'Metas', icon: Target, badge: null },
+    { id: 'tasks', label: 'Tarefas', icon: CheckCircle2, badge: '12' },
+    { id: 'projects', label: 'Projetos', icon: Folder, badge: '3' },
+    { id: 'skills', label: 'Habilidades', icon: TrendingUp, badge: null },
+    { id: 'diary', label: 'Diário', icon: BookMarked, badge: null },
+    { id: 'running', label: 'Corrida', icon: Activity, badge: null },
+    { id: 'workout', label: 'Treino', icon: Dumbbell, badge: null },
+    { id: 'diet', label: 'Dieta', icon: Utensils, badge: null },
+    { id: 'studies', label: 'Estudos', icon: BookOpen, badge: null },
+    { id: 'books', label: 'Livros', icon: BookMarked, badge: null },
+    { id: 'travels', label: 'Viagens', icon: MapPin, badge: null },
+    { id: 'movies', label: 'Filmes e Séries', icon: Film, badge: null },
   ];
 
-  const lifeAreaItems = [
-    { id: 'goals', label: 'Metas & Objetivos', icon: Award, badge: null },
-    { id: 'studies', label: 'Estudos', icon: BookOpen, badge: null },
-    { id: 'finance', label: 'Finanças', icon: DollarSign, badge: null },
-    { id: 'fitness', label: 'Treinos', icon: Dumbbell, badge: null },
-    { id: 'nutrition', label: 'Dieta', icon: Utensils, badge: null },
-    { id: 'analytics', label: 'Relatórios', icon: TrendingUp, badge: null },
+  // Área Profissional - Professional Area  
+  const professionalAreaItems = [
+    { id: 'finances', label: 'Finanças', icon: DollarSign, badge: null },
+    { id: 'crm', label: 'CRM', icon: Users, badge: null },
+    { id: 'content-planner', label: 'Planejador de Conteúdo', icon: Calendar, badge: null },
+    { id: 'competition', label: 'Análise de Concorrência', icon: TrendingUp, badge: null },
+    { id: 'proposal-template', label: 'Modelo de Proposta', icon: FileText, badge: null },
+    { id: 'resume-template', label: 'Modelo de Currículo', icon: User, badge: null },
+  ];
+
+  // Área Ferramentas - Tools Area
+  const toolsAreaItems = [
+    { id: 'quick-notes', label: 'Anotações Rápidas', icon: PenTool, badge: null },
+    { id: 'notebooks', label: 'Caderno de Anotações', icon: StickyNote, badge: null },
+    { id: 'second-brain', label: 'Segundo Cérebro', icon: Brain, badge: null },
+    { id: 'soundscapes', label: 'Paisagens Sonoras', icon: Music, badge: null },
+    { id: 'pomodoro', label: 'Pomodoro', icon: Timer, badge: null },
+    { id: 'eisenhower', label: 'Matriz de Eisenhower', icon: Grid3x3, badge: null },
+    { id: 'wheel-of-life', label: 'Roda da Vida', icon: Circle, badge: null },
+    { id: 'ikigai', label: 'Ikigai', icon: Heart, badge: null },
   ];
 
   const bottomItems = [
     { id: 'settings', label: 'Configurações', icon: Settings, badge: null },
-    { id: 'profile', label: 'Perfil', icon: User, badge: null },
     { id: 'help', label: 'Ajuda', icon: HelpCircle, badge: null },
   ];
 
-  const renderNavItem = (item: typeof mainNavItems[0], isActive: boolean) => (
+  const renderNavItem = (item: typeof personalAreaItems[0], isActive: boolean) => (
     <Button
       key={item.id}
       variant={isActive ? 'secondary' : 'ghost'}
       className={cn(
         'w-full justify-start h-10 px-3 text-left font-normal',
-        isActive && 'bg-primary/20 text-primary border-primary/30'
+        isActive && 'bg-secondary/20 text-foreground border-secondary/30'
       )}
       onClick={() => onSectionChange(item.id)}
     >
@@ -77,11 +110,11 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <Zap className="h-4 w-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <Upload className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="font-bold text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h2 className="font-bold text-lg text-foreground">
               Alta Per4mance
             </h2>
             <p className="text-xs text-muted-foreground">Sistema de Produtividade</p>
@@ -89,40 +122,53 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
         </div>
       </div>
 
-      {/* Main Navigation */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto">
+        {/* Área Pessoal */}
         <div className="p-3 space-y-1">
           <div className="px-3 py-2">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Principal
+              Área Pessoal
             </h3>
           </div>
-          {mainNavItems.map((item) => renderNavItem(item, activeSection === item.id))}
+          {personalAreaItems.map((item) => renderNavItem(item, activeSection === item.id))}
         </div>
 
         <Separator className="mx-3" />
 
-        {/* Life Areas */}
+        {/* Área Profissional */}
         <div className="p-3 space-y-1">
           <div className="px-3 py-2">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Áreas da Vida
+              Área Profissional
             </h3>
           </div>
-          {lifeAreaItems.map((item) => renderNavItem(item, activeSection === item.id))}
+          {professionalAreaItems.map((item) => renderNavItem(item, activeSection === item.id))}
+        </div>
+
+        <Separator className="mx-3" />
+
+        {/* Área Ferramentas */}
+        <div className="p-3 space-y-1">
+          <div className="px-3 py-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Ferramentas
+            </h3>
+          </div>
+          {toolsAreaItems.map((item) => renderNavItem(item, activeSection === item.id))}
         </div>
 
         <Separator className="mx-3" />
 
         {/* Premium Upgrade Card */}
         <div className="p-3">
-          <div className="mx-3 p-4 rounded-lg gradient-primary">
-            <div className="text-white space-y-2">
+          <div className="mx-3 p-4 rounded-lg bg-primary">
+            <div className="text-primary-foreground space-y-2">
               <h4 className="font-semibold text-sm">Upgrade para Pro</h4>
               <p className="text-xs opacity-90">
-                Desbloqueie AI Coach avançado, integrações ilimitadas e mais.
+                Desbloqueie funcionalidades avançadas e integrações ilimitadas.
               </p>
-              <Button variant="secondary" size="sm" className="w-full mt-2 text-primary">
+              <Button variant="secondary" size="sm" className="w-full mt-2">
                 Fazer Upgrade
               </Button>
             </div>
@@ -138,8 +184,8 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
       {/* User Profile */}
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
-            <span className="text-white text-sm font-semibold">VR</span>
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground text-sm font-semibold">VP</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">Usuário Demo</p>
