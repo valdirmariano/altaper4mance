@@ -4,11 +4,17 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Sidebar from '../Navigation/Sidebar';
 import Dashboard from '../Dashboard';
 import TaskManager from '../Tasks/TaskManager';
+import GoalsManager from '../Goals/GoalsManager';
+import ProjectsManager from '../Projects/ProjectsManager';
+import DiaryManager from '../Diary/DiaryManager';
+import FinanceManager from '../Finance/FinanceManager';
+import StudiesManager from '../Studies/StudiesManager';
+import PomodoroTimer from '../Tools/PomodoroTimer';
+import SecondBrain from '../Tools/SecondBrain';
 import { Menu, Bell, Search, User } from 'lucide-react';
 
 const MainLayout = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -16,196 +22,81 @@ const MainLayout = () => {
         return <Dashboard />;
       case 'tasks':
         return <TaskManager />;
-      case 'habits':
+      case 'goals':
+        return <GoalsManager />;
+      case 'projects':
+        return <ProjectsManager />;
+      case 'diary':
+        return <DiaryManager />;
+      case 'finance':
+        return <FinanceManager />;
+      case 'studies':
+        return <StudiesManager />;
+      case 'pomodoro':
+        return <PomodoroTimer />;
+      case 'secondbrain':
+        return <SecondBrain />;
+      default:
         return (
           <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Rastreador de Hábitos
+            <h2 className="text-2xl font-semibold mb-2 capitalize">
+              {activeSection.replace(/-/g, ' ')}
             </h2>
             <p className="text-muted-foreground">Em desenvolvimento...</p>
           </div>
         );
-      case 'notes':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Segundo Cérebro
-            </h2>
-            <p className="text-muted-foreground">Sistema de notas em desenvolvimento...</p>
-          </div>
-        );
-      case 'pomodoro':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Timer Pomodoro
-            </h2>
-            <p className="text-muted-foreground">Timer avançado em desenvolvimento...</p>
-          </div>
-        );
-      case 'calendar':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Agenda & Calendário
-            </h2>
-            <p className="text-muted-foreground">Calendário integrado em desenvolvimento...</p>
-          </div>
-        );
-      case 'goals':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Metas & Objetivos
-            </h2>
-            <p className="text-muted-foreground">Sistema de metas em desenvolvimento...</p>
-          </div>
-        );
-      case 'studies':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Estudos & Aprendizado
-            </h2>
-            <p className="text-muted-foreground">Módulo de estudos em desenvolvimento...</p>
-          </div>
-        );
-      case 'finance':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Controle Financeiro
-            </h2>
-            <p className="text-muted-foreground">Gestão financeira em desenvolvimento...</p>
-          </div>
-        );
-      case 'fitness':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Treinos & Exercícios
-            </h2>
-            <p className="text-muted-foreground">Planner de treinos em desenvolvimento...</p>
-          </div>
-        );
-      case 'nutrition':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Dieta & Nutrição
-            </h2>
-            <p className="text-muted-foreground">Controle nutricional em desenvolvimento...</p>
-          </div>
-        );
-      case 'analytics':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Relatórios & Analytics
-            </h2>
-            <p className="text-muted-foreground">Dashboard de analytics em desenvolvimento...</p>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Configurações
-            </h2>
-            <p className="text-muted-foreground">Configurações do sistema em desenvolvimento...</p>
-          </div>
-        );
-      case 'profile':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Perfil do Usuário
-            </h2>
-            <p className="text-muted-foreground">Gerenciamento de perfil em desenvolvimento...</p>
-          </div>
-        );
-      case 'help':
-        return (
-          <div className="p-6">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Ajuda & Suporte
-            </h2>
-            <p className="text-muted-foreground">Central de ajuda em desenvolvimento...</p>
-          </div>
-        );
-      default:
-        return <Dashboard />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-gradient-background">
+    <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-80 lg:flex-col">
+      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:shrink-0">
         <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
-
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-80">
-          <Sidebar 
-            activeSection={activeSection} 
-            onSectionChange={(section) => {
-              setActiveSection(section);
-              setSidebarOpen(false);
-            }} 
-          />
-        </SheetContent>
-      </Sheet>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-          <div className="flex items-center justify-between h-full px-6">
-            <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
+        <header className="h-14 border-b border-border bg-background sticky top-0 z-40">
+          <div className="flex items-center justify-between h-full px-4">
+            <div className="flex items-center gap-3">
+              {/* Mobile Menu */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8">
+                    <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-80">
-                  <Sidebar 
-                    activeSection={activeSection} 
-                    onSectionChange={(section) => {
-                      setActiveSection(section);
-                    }} 
-                  />
+                <SheetContent side="left" className="p-0 w-72">
+                  <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
                 </SheetContent>
               </Sheet>
 
-              {/* Search Bar */}
+              {/* Search */}
               <div className="hidden md:flex relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Buscar tarefas, notas, hábitos..."
-                  className="pl-10 pr-4 py-2 w-80 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="Buscar..."
+                  className="pl-9 pr-4 py-1.5 w-64 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full text-xs"></span>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+                <Bell className="h-4 w-4" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full"></span>
               </Button>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <User className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
+        {/* Content */}
         <main className="flex-1 overflow-y-auto">
           {renderContent()}
         </main>
