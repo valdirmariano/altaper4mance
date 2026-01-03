@@ -4,130 +4,95 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Alta Per4mance Design System - Premium productivity platform 
-All colors MUST be HSL for proper theming support.
+/* Alta Per4mance Design System - Minimalista Preto/Branco/Cinza
+   Identidade Visual: Preto predominante, Branco para textos, Cinza #585858 para detalhes
+   All colors MUST be HSL for proper theming support.
 */
 
 @layer base {
   :root {
-    /* Brand colors - Alta Per4mance theme */
-    --background: 240 10% 3.9%;
-    --background-secondary: 240 8% 7%;
-    --background-tertiary: 240 6% 10%;
+    /* Core Brand Colors - Minimalista */
+    --background: 0 0% 6%;
+    --background-secondary: 0 0% 9%;
+    --background-tertiary: 0 0% 12%;
     --foreground: 0 0% 98%;
 
-    --card: 240 8% 7%;
-    --card-secondary: 240 6% 10%;
+    --card: 0 0% 9%;
+    --card-secondary: 0 0% 12%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 8% 7%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary brand - Deep blue/purple for premium feel */
-    --primary: 250 84% 54%;
-    --primary-light: 250 70% 65%;
-    --primary-dark: 250 90% 40%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - White for main actions */
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 6%;
 
-    /* Secondary - Elegant purple tones */
-    --secondary: 270 60% 50%;
-    --secondary-light: 270 45% 65%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Gray #585858 */
+    --secondary: 0 0% 35%;
+    --secondary-foreground: 0 0% 98%;
 
-    /* Success/Progress - Green theme */
-    --success: 142 76% 36%;
-    --success-light: 142 69% 58%;
-    --success-foreground: 0 0% 100%;
+    /* Muted - Darker grays */
+    --muted: 0 0% 15%;
+    --muted-light: 0 0% 25%;
+    --muted-foreground: 0 0% 55%;
 
-    /* Muted tones */
-    --muted: 240 5% 15%;
-    --muted-light: 240 4% 25%;
-    --muted-foreground: 240 5% 65%;
-
-    /* Accent colors */
-    --accent: 240 6% 10%;
-    --accent-light: 240 4% 18%;
+    /* Accent - Subtle gray highlights */
+    --accent: 0 0% 15%;
     --accent-foreground: 0 0% 98%;
 
-    /* Warning & Error */
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Success/Progress - Subtle green */
+    --success: 142 40% 40%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning */
+    --warning: 45 70% 50%;
+    --warning-foreground: 0 0% 6%;
+
+    /* Destructive */
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 98%;
 
     /* Borders & Inputs */
-    --border: 240 6% 20%;
-    --input: 240 6% 15%;
-    --ring: 250 84% 54%;
-
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(var(--success-light)) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card-secondary)) 100%);
-    --gradient-background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background-secondary)) 100%);
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.1), 0 0 20px hsl(var(--primary) / 0.1);
-    --shadow-success: 0 0 0 1px hsl(var(--success) / 0.2), 0 0 20px hsl(var(--success) / 0.15);
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 98%;
 
     /* Border radius */
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 98%;
   }
 
   .light {
-    /* Light theme (for future use) */
     --background: 0 0% 100%;
-    --background-secondary: 240 20% 99%;
-    --background-tertiary: 240 20% 97%;
-    --foreground: 240 10% 3.9%;
+    --background-secondary: 0 0% 98%;
+    --background-tertiary: 0 0% 96%;
+    --foreground: 0 0% 6%;
 
     --card: 0 0% 100%;
-    --card-secondary: 240 20% 99%;
-    --card-foreground: 240 10% 3.9%;
+    --card-secondary: 0 0% 98%;
+    --card-foreground: 0 0% 6%;
 
-    --primary: 250 84% 54%;
-    --primary-light: 250 70% 65%;
-    --primary-dark: 250 90% 40%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 6%;
+    --primary-foreground: 0 0% 98%;
 
-    --muted: 240 5% 96%;
-    --muted-light: 240 4% 90%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --secondary: 0 0% 35%;
+    --secondary-foreground: 0 0% 6%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-  }
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-  /* Sidebar variables */
-  :root {
-    --sidebar-background: 240 8% 7%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 250 84% 54%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 10%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 6% 20%;
-    --sidebar-ring: 250 84% 54%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
   }
 }
 
@@ -141,62 +106,37 @@ All colors MUST be HSL for proper theming support.
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - Minimal */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply bg-muted-foreground/20 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-muted-foreground/40;
   }
 }
 
 @layer components {
-  /* Custom utility classes */
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-
-  .gradient-success {
-    background: var(--gradient-success);
-  }
-
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-
-  .gradient-background {
-    background: var(--gradient-background);
-  }
-
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .shadow-success {
-    box-shadow: var(--shadow-success);
-  }
-
   /* Animation utilities */
   .animate-fade-in {
-    animation: fade-in 0.3s ease-in-out;
+    animation: fade-in 0.2s ease-out;
   }
 
   .animate-slide-up {
-    animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slide-up 0.3s ease-out;
   }
 
   .animate-scale-in {
-    animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: scale-in 0.15s ease-out;
   }
 
   @keyframes fade-in {
@@ -211,7 +151,7 @@ All colors MUST be HSL for proper theming support.
   @keyframes slide-up {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -222,11 +162,20 @@ All colors MUST be HSL for proper theming support.
   @keyframes scale-in {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.98);
     }
     to {
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  /* Minimal hover effect */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
   }
 }
