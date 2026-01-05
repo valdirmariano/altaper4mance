@@ -1,1 +1,10 @@
 project_id = "lhrachscfdoqlqxfykgf"
+
+[functions.per4mance-chat]
+verify_jwt = false
+
+[functions.per4mance-tts]
+verify_jwt = false
+
+[functions.per4mance-action]
+verify_jwt = false
