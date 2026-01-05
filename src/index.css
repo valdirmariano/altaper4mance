@@ -280,7 +280,8 @@
   }
 
   .card-hover:hover {
-    @apply border-border-light shadow-lg;
+    @apply shadow-lg;
+    border-color: hsl(var(--border-light));
     transform: translateY(-2px);
   }
 
