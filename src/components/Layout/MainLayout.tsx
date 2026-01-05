@@ -12,6 +12,7 @@ import StudiesManager from '../Studies/StudiesManager';
 import PomodoroTimer from '../Tools/PomodoroTimer';
 import SecondBrain from '../Tools/SecondBrain';
 import HabitsManager from '../Habits/HabitsManager';
+import Per4manceAI from '../AI/Per4manceAI';
 import { useAppStore } from '@/lib/store';
 import { Menu, Bell, Search, User, Sun, Moon, Settings } from 'lucide-react';
 
@@ -46,6 +47,7 @@ const MainLayout = () => {
       case 'studies': return <StudiesManager />;
       case 'pomodoro': return <PomodoroTimer />;
       case 'secondbrain': return <SecondBrain />;
+      case 'ai': return <Per4manceAI />;
       default:
         return (
           <div className="p-6 flex items-center justify-center min-h-[50vh]">

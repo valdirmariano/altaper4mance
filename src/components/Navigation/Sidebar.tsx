@@ -88,6 +88,8 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
     { id: 'ikigai', label: 'Ikigai', icon: Lightbulb },
   ];
 
+  const aiItem = { id: 'ai', label: 'Per4mance AI', icon: Sparkles, badge: 'IA' };
+
   const renderNavItem = (item: { id: string; label: string; icon: React.ElementType; badge?: string }, isActive: boolean) => (
     <Button
       key={item.id}
@@ -159,8 +161,8 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
         </div>
       </div>
 
-      {/* Dashboard Link */}
-      <div className="p-3">
+      {/* Dashboard & AI Links */}
+      <div className="p-3 space-y-1">
         <Button
           variant="ghost"
           className={cn(
@@ -173,6 +175,33 @@ const Sidebar = ({ activeSection, onSectionChange }: SidebarProps) => {
         >
           <Home className="h-4 w-4 mr-3" />
           Dashboard
+        </Button>
+        
+        {/* Per4mance AI - Highlighted */}
+        <Button
+          variant="ghost"
+          className={cn(
+            'w-full justify-start h-10 px-3 text-left font-medium relative overflow-hidden group',
+            activeSection === 'ai' 
+              ? 'bg-accent/20 text-accent border border-accent/30' 
+              : 'text-muted-foreground hover:text-accent hover:bg-accent/10 border border-transparent'
+          )}
+          onClick={() => onSectionChange('ai')}
+        >
+          <Sparkles className={cn(
+            "h-4 w-4 mr-3 transition-all",
+            activeSection === 'ai' ? 'text-accent' : 'group-hover:text-accent'
+          )} />
+          <span className="flex-1">Per4mance AI</span>
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "text-[10px] px-1.5 h-5",
+              activeSection === 'ai' ? 'bg-accent text-accent-foreground' : 'bg-accent/20 text-accent'
+            )}
+          >
+            IA
+          </Badge>
         </Button>
       </div>
 
