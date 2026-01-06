@@ -13,13 +13,25 @@ import PomodoroTimer from '../Tools/PomodoroTimer';
 import SecondBrain from '../Tools/SecondBrain';
 import HabitsManager from '../Habits/HabitsManager';
 import Per4manceAI from '../AI/Per4manceAI';
+import AuthModal from '../Auth/AuthModal';
 import { useAppStore } from '@/lib/store';
-import { Menu, Bell, Search, User, Sun, Moon } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Menu, Bell, Search, User, Sun, Moon, LogOut, Loader2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const MainLayout = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const { settings, updateSettings } = useAppStore();
+  const { user, loading, signOut, isAuthenticated } = useAuth();
   
   // Apply theme class
   useEffect(() => {
@@ -39,6 +51,15 @@ const MainLayout = () => {
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const openAuth = (mode: 'login' | 'register') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
   };
 
   const renderContent = () => {
@@ -66,6 +87,17 @@ const MainLayout = () => {
         );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -116,9 +148,36 @@ const MainLayout = () => {
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-accent rounded-full"></span>
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <User className="h-4 w-4" />
-              </Button>
+              
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium truncate">{user?.email}</p>
+                      <p className="text-xs text-muted-foreground">Conta ativa</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => openAuth('login')}>
+                    Entrar
+                  </Button>
+                  <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => openAuth('register')}>
+                    Cadastrar
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -128,6 +187,13 @@ const MainLayout = () => {
           {renderContent()}
         </main>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+        mode={authMode}
+      />
     </div>
   );
 };
