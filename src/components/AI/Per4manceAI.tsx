@@ -23,11 +23,10 @@ interface ActionData {
   data: Record<string, unknown>;
 }
 
+// Browser TTS voices (free, no API required)
 const VOICES = [
-  { id: 'female-natural', label: 'Feminina Natural', icon: '👩' },
-  { id: 'male-natural', label: 'Masculina Natural', icon: '👨' },
-  { id: 'female-warm', label: 'Feminina Calorosa', icon: '👩‍🦰' },
-  { id: 'male-calm', label: 'Masculina Calma', icon: '🧔' },
+  { id: 'pt-BR-female', label: 'Feminina (BR)', icon: '👩' },
+  { id: 'pt-BR-male', label: 'Masculina (BR)', icon: '👨' },
 ];
 
 export default function Per4manceAI() {
@@ -127,38 +126,50 @@ export default function Per4manceAI() {
         .replace(/#{1,6}\s/g, '')
         .replace(/\[.*?\]\(.*?\)/g, '')
         .replace(/`/g, '')
-        .substring(0, 500); // Limit text length
+        .replace(/\n/g, '. ')
+        .substring(0, 1000);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/per4mance-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ text: cleanText, voice: selectedVoice }),
-        }
-      );
-
-      if (response.ok) {
-        const { audioContent } = await response.json();
-        const audioUrl = `data:audio/mpeg;base64,${audioContent}`;
+      // Use browser's native Web Speech API (FREE!)
+      if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
         
-        if (audioRef.current) {
-          audioRef.current.pause();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        
+        // Try to find a PT-BR voice
+        const voices = window.speechSynthesis.getVoices();
+        const ptVoice = voices.find(v => 
+          v.lang.includes('pt-BR') || v.lang.includes('pt_BR')
+        );
+        
+        if (ptVoice) {
+          utterance.voice = ptVoice;
         }
         
-        audioRef.current = new Audio(audioUrl);
-        audioRef.current.onended = () => setIsSpeaking(false);
-        audioRef.current.onerror = () => setIsSpeaking(false);
-        await audioRef.current.play();
+        // Select voice based on preference
+        if (selectedVoice.includes('female')) {
+          const femaleVoice = voices.find(v => 
+            (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
+            (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('feminino'))
+          );
+          if (femaleVoice) utterance.voice = femaleVoice;
+        } else {
+          const maleVoice = voices.find(v => 
+            (v.lang.includes('pt-BR') || v.lang.includes('pt_BR')) && 
+            (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('masculino'))
+          );
+          if (maleVoice) utterance.voice = maleVoice;
+        }
+        
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        
+        window.speechSynthesis.speak(utterance);
       } else {
-        const error = await response.json();
-        if (error.error === 'TTS não configurado') {
-          toast.info('Síntese de voz não configurada. Configure a chave ElevenLabs nas configurações.');
-          setAudioEnabled(false);
-        }
+        toast.info('Seu navegador não suporta síntese de voz.');
         setIsSpeaking(false);
       }
     } catch (error) {
@@ -168,6 +179,9 @@ export default function Per4manceAI() {
   }, [audioEnabled, selectedVoice]);
 
   const stopSpeaking = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
