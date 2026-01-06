@@ -14,10 +14,11 @@ import SecondBrain from '../Tools/SecondBrain';
 import HabitsManager from '../Habits/HabitsManager';
 import Per4manceAI from '../AI/Per4manceAI';
 import { useAppStore } from '@/lib/store';
-import { Menu, Bell, Search, User, Sun, Moon, Settings } from 'lucide-react';
+import { Menu, Bell, Search, User, Sun, Moon } from 'lucide-react';
 
 const MainLayout = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { settings, updateSettings } = useAppStore();
   
   // Apply theme class
@@ -34,6 +35,10 @@ const MainLayout = () => {
 
   const toggleTheme = () => {
     updateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' });
+  };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   const renderContent = () => {
@@ -65,8 +70,13 @@ const MainLayout = () => {
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:shrink-0">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <div className={`hidden lg:flex lg:flex-col lg:shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'}`}>
+        <Sidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection} 
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+        />
       </div>
 
       {/* Main Content */}
