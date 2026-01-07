@@ -5,6 +5,11 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppStore } from '@/lib/store';
+import { useTasks } from '@/hooks/useTasks';
+import { useHabits } from '@/hooks/useHabits';
+import { useGoals } from '@/hooks/useGoals';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Calendar, 
   CheckSquare, 
@@ -24,17 +29,27 @@ import {
   Award,
   Zap,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { tasks, habits, goals, userStats, transactions, toggleTask, toggleHabitToday, settings } = useAppStore();
+  const { userStats, settings } = useAppStore();
+  const { user } = useAuth();
+  
+  // Supabase data hooks
+  const { tasks, loading: tasksLoading, toggleTask } = useTasks();
+  const { habits, loading: habitsLoading, toggleHabitToday, isHabitCompletedOnDate, getCompletedTodayCount } = useHabits();
+  const { goals, loading: goalsLoading, getActiveGoalsCount } = useGoals();
+  const { getMonthlyStats, loading: transactionsLoading } = useTransactions();
   
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [waterIntake, setWaterIntake] = useState(4);
   const [quickNote, setQuickNote] = useState('');
   const [showAIChat, setShowAIChat] = useState(false);
+
+  const isLoading = tasksLoading || habitsLoading || goalsLoading || transactionsLoading;
 
   // Pomodoro timer effect
   useEffect(() => {
@@ -47,15 +62,14 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [pomodoroActive, pomodoroTime]);
 
-  const todayTasks = tasks.filter(t => !t.completed).slice(0, 5);
-  const completedToday = tasks.filter(t => t.completed).length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayTasks = tasks.filter(t => t.status !== 'done').slice(0, 5);
+  const completedToday = tasks.filter(t => t.status === 'done').length;
   const todayHabits = habits.slice(0, 4);
-  const completedHabits = habits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length;
+  const completedHabits = getCompletedTodayCount();
 
-  // Calculate finances
-  const totalReceitas = transactions.filter(t => t.type === 'receita').reduce((sum, t) => sum + t.amount, 0);
-  const totalDespesas = transactions.filter(t => t.type === 'despesa').reduce((sum, t) => sum + t.amount, 0);
-  const saldo = totalReceitas - totalDespesas;
+  // Calculate finances from Supabase
+  const { receitas: totalReceitas, despesas: totalDespesas, saldo } = getMonthlyStats();
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -192,37 +206,40 @@ const Dashboard = () => {
             </div>
             
             <div className="space-y-2">
-              {todayTasks.map((task) => (
-                <div 
-                  key={task.id}
-                  className={`group flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                    task.completed 
-                      ? 'bg-muted/30 border-transparent' 
-                      : 'border-border hover:border-accent/30 hover:bg-muted/20'
-                  }`}
-                  onClick={() => toggleTask(task.id)}
-                >
-                  <Checkbox 
-                    checked={task.completed} 
-                    className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                  />
-                  <span className={`flex-1 text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                    {task.title}
-                  </span>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity ${
-                      task.priority === 'alta' 
-                        ? 'border-destructive/50 text-destructive' 
-                        : task.priority === 'média' 
-                          ? 'border-warning/50 text-warning' 
-                          : 'border-muted text-muted-foreground'
+              {todayTasks.map((task) => {
+                const isDone = task.status === 'done';
+                return (
+                  <div 
+                    key={task.id}
+                    className={`group flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                      isDone 
+                        ? 'bg-muted/30 border-transparent' 
+                        : 'border-border hover:border-accent/30 hover:bg-muted/20'
                     }`}
+                    onClick={() => toggleTask(task.id)}
                   >
-                    {task.priority}
-                  </Badge>
-                </div>
-              ))}
+                    <Checkbox 
+                      checked={isDone} 
+                      className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                    />
+                    <span className={`flex-1 text-sm ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                      {task.title}
+                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity ${
+                        task.priority === 'p0' || task.priority === 'alta'
+                          ? 'border-destructive/50 text-destructive' 
+                          : task.priority === 'p1' || task.priority === 'média'
+                            ? 'border-warning/50 text-warning' 
+                            : 'border-muted text-muted-foreground'
+                      }`}
+                    >
+                      {task.priority}
+                    </Badge>
+                  </div>
+                );
+              })}
               
               {todayTasks.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
@@ -320,7 +337,8 @@ const Dashboard = () => {
             
             <div className="space-y-2">
               {todayHabits.map((habit) => {
-                const isCompleted = habit.completedDates.includes(new Date().toISOString().split('T')[0]);
+                const isCompleted = isHabitCompletedOnDate(habit.id, today);
+                const streak = habit.streak || 0;
                 return (
                   <div 
                     key={habit.id} 
@@ -335,12 +353,12 @@ const Dashboard = () => {
                         className="data-[state=checked]:bg-success data-[state=checked]:border-success"
                       />
                       <span className={`text-sm ${isCompleted ? 'text-muted-foreground' : ''}`}>
-                        {habit.name}
+                        {habit.title}
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-xs">
-                      <Flame className={`h-3 w-3 ${habit.streak > 0 ? 'text-warning' : 'text-muted-foreground/50'}`} />
-                      <span className={habit.streak > 0 ? 'text-warning' : 'text-muted-foreground'}>{habit.streak}</span>
+                      <Flame className={`h-3 w-3 ${streak > 0 ? 'text-warning' : 'text-muted-foreground/50'}`} />
+                      <span className={streak > 0 ? 'text-warning' : 'text-muted-foreground'}>{streak}</span>
                     </div>
                   </div>
                 );
@@ -361,22 +379,22 @@ const Dashboard = () => {
             </div>
             
             <div className="space-y-4">
-              {goals.filter(g => g.status === 'ativo').slice(0, 3).map((goal) => (
+              {goals.filter(g => g.status === 'em_progresso' || g.status === 'ativo').slice(0, 3).map((goal) => (
                 <div key={goal.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm truncate flex-1">{goal.title}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{goal.progress}%</span>
+                    <span className="text-xs text-muted-foreground ml-2">{goal.progress || 0}%</span>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-accent rounded-full transition-all duration-500"
-                      style={{ width: `${goal.progress}%` }}
+                      style={{ width: `${goal.progress || 0}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{goal.pillar}</span>
+                    <span>{goal.pillar || 'Geral'}</span>
                     <Badge variant="outline" className="text-xs h-5">
-                      {goal.type === 'curto' ? '1-3 meses' : goal.type === 'médio' ? '3-12 meses' : '1+ ano'}
+                      {goal.horizon === 'curto' ? '1-3 meses' : goal.horizon === 'médio' ? '3-12 meses' : '1+ ano'}
                     </Badge>
                   </div>
                 </div>
@@ -400,7 +418,7 @@ const Dashboard = () => {
                 <div className="flex items-start gap-2">
                   <ChevronRight className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                   <p className="text-sm">
-                    Você tem <span className="text-foreground font-medium">{tasks.filter(t => !t.completed).length} tarefas</span> pendentes. 
+                    Você tem <span className="text-foreground font-medium">{tasks.filter(t => t.status !== 'done').length} tarefas</span> pendentes. 
                     Foque nas de alta prioridade primeiro.
                   </p>
                 </div>
