@@ -160,6 +160,11 @@ export const useHabits = () => {
     );
   };
 
+  const checkHabitOnDate = (habitId: string, date: Date): boolean => {
+    const dateStr = date.toISOString().split('T')[0];
+    return isHabitCompletedOnDate(habitId, dateStr);
+  };
+
   const deleteHabit = async (id: string) => {
     try {
       const { error } = await supabase
@@ -188,6 +193,7 @@ export const useHabits = () => {
     addHabit,
     toggleHabitToday,
     isHabitCompletedOnDate,
+    checkHabitOnDate,
     deleteHabit,
     getCompletedTodayCount,
     refetch: fetchHabits,
