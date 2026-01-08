@@ -113,12 +113,29 @@ export const useTransactions = () => {
     };
   };
 
+  const getTotals = () => {
+    const totalIncome = transactions
+      .filter(t => t.type === 'receita')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpenses = transactions
+      .filter(t => t.type === 'despesa')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      totalIncome,
+      totalExpenses,
+      balance: totalIncome - totalExpenses,
+    };
+  };
+
   return {
     transactions,
     loading,
     addTransaction,
     deleteTransaction,
     getMonthlyStats,
+    getTotals,
     refetch: fetchTransactions,
   };
 };
