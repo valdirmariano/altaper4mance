@@ -34,7 +34,8 @@ import {
   HelpCircle,
   Zap,
   Award,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -81,6 +82,8 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
   ];
 
   const toolsItems = [
+    { id: 'gamification', label: 'Gamificação', icon: Trophy },
+    { id: 'habits', label: 'Hábitos', icon: Target },
     { id: 'quicknotes', label: 'Anotações Rápidas', icon: StickyNote },
     { id: 'notebook', label: 'Caderno de Anotações', icon: BookOpen },
     { id: 'secondbrain', label: 'Segundo Cérebro', icon: Brain },

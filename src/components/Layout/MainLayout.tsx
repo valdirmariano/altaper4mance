@@ -12,6 +12,7 @@ import StudiesManager from '../Studies/StudiesManager';
 import PomodoroTimer from '../Tools/PomodoroTimer';
 import SecondBrain from '../Tools/SecondBrain';
 import HabitsManager from '../Habits/HabitsManager';
+import GamificationPanel from '../Gamification/GamificationPanel';
 import Per4manceAI from '../AI/Per4manceAI';
 import AuthModal from '../Auth/AuthModal';
 import { useAppStore } from '@/lib/store';
@@ -68,11 +69,13 @@ const MainLayout = () => {
       case 'tasks': return <TaskManager />;
       case 'goals': return <GoalsManager />;
       case 'projects': return <ProjectsManager />;
-      case 'diary': return <HabitsManager />;
+      case 'diary': return <DiaryManager />;
+      case 'habits': return <HabitsManager />;
       case 'finance': return <FinanceManager />;
       case 'studies': return <StudiesManager />;
       case 'pomodoro': return <PomodoroTimer />;
       case 'secondbrain': return <SecondBrain />;
+      case 'gamification': return <GamificationPanel />;
       case 'ai': return <Per4manceAI />;
       default:
         return (
