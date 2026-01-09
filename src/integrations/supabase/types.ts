@@ -47,6 +47,57 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          completed_hours: number | null
+          created_at: string
+          description: string | null
+          id: string
+          platform: string | null
+          progress: number | null
+          rating: number | null
+          skill: string | null
+          status: string
+          title: string
+          total_hours: number | null
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_hours?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform?: string | null
+          progress?: number | null
+          rating?: number | null
+          skill?: string | null
+          status?: string
+          title: string
+          total_hours?: number | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_hours?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform?: string | null
+          progress?: number | null
+          rating?: number | null
+          skill?: string | null
+          status?: string
+          title?: string
+          total_hours?: number | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -201,6 +252,39 @@ export type Database = {
           mood?: number | null
           reflection?: string | null
           tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pomodoro_sessions: {
+        Row: {
+          created_at: string
+          daily_goal: number | null
+          focus_minutes: number | null
+          id: string
+          session_date: string
+          sessions_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_goal?: number | null
+          focus_minutes?: number | null
+          id?: string
+          session_date?: string
+          sessions_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_goal?: number | null
+          focus_minutes?: number | null
+          id?: string
+          session_date?: string
+          sessions_count?: number | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

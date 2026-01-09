@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { usePomodoro } from '@/hooks/usePomodoro';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 import { 
   Play,
   Pause,
@@ -9,23 +12,31 @@ import {
   Settings,
   Volume2,
   VolumeX,
-  Timer,
-  Coffee,
-  Brain
+  Brain,
+  Coffee
 } from 'lucide-react';
 
 const PomodoroTimer = () => {
+  const { user } = useAuth();
+  const { sessionsCount, focusMinutes, dailyGoal, incrementSession } = usePomodoro();
+  
   const [mode, setMode] = useState<'focus' | 'short-break' | 'long-break'>('focus');
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
-  const [sessions, setSessions] = useState(0);
+  const [localSessions, setLocalSessions] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const modes = {
     'focus': { label: 'Foco', duration: 25 * 60, icon: Brain },
     'short-break': { label: 'Pausa Curta', duration: 5 * 60, icon: Coffee },
     'long-break': { label: 'Pausa Longa', duration: 15 * 60, icon: Coffee },
   };
+
+  // Sync local sessions with database
+  const totalSessions = user ? sessionsCount : localSessions;
+  const totalFocusMinutes = user ? focusMinutes : localSessions * 25;
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -34,12 +45,27 @@ const PomodoroTimer = () => {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && isRunning) {
       // Timer completed
+      setIsRunning(false);
+      
+      if (soundEnabled) {
+        playNotificationSound();
+      }
+      
       if (mode === 'focus') {
-        setSessions((prev) => prev + 1);
+        // Save session
+        if (user) {
+          incrementSession(25);
+        } else {
+          setLocalSessions(prev => prev + 1);
+        }
+        
+        toast.success('🎉 Sessão de foco concluída!');
+        
         // Auto switch to break
-        if ((sessions + 1) % 4 === 0) {
+        const newSessionCount = totalSessions + 1;
+        if (newSessionCount % 4 === 0) {
           setMode('long-break');
           setTimeLeft(15 * 60);
         } else {
@@ -47,14 +73,37 @@ const PomodoroTimer = () => {
           setTimeLeft(5 * 60);
         }
       } else {
+        toast.success('Pausa concluída! Hora de focar 💪');
         setMode('focus');
         setTimeLeft(25 * 60);
       }
-      setIsRunning(false);
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft, mode, sessions]);
+  }, [isRunning, timeLeft, mode, user, incrementSession, totalSessions, soundEnabled]);
+
+  const playNotificationSound = () => {
+    try {
+      // Use Web Audio API for notification sound
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch {
+      console.log('Audio not available');
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -75,12 +124,11 @@ const PomodoroTimer = () => {
 
   const handleSkip = () => {
     if (mode === 'focus') {
-      if (sessions % 4 === 3) {
+      if (totalSessions % 4 === 3) {
         handleModeChange('long-break');
       } else {
         handleModeChange('short-break');
       }
-      setSessions((prev) => prev + 1);
     } else {
       handleModeChange('focus');
     }
@@ -206,17 +254,23 @@ const PomodoroTimer = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
         <Card className="p-4 bg-card border-border text-center">
           <p className="text-xs text-muted-foreground mb-1">Sessões Hoje</p>
-          <p className="text-2xl font-semibold">{sessions}</p>
+          <p className="text-2xl font-semibold">{totalSessions}</p>
         </Card>
         <Card className="p-4 bg-card border-border text-center">
           <p className="text-xs text-muted-foreground mb-1">Tempo Focado</p>
-          <p className="text-2xl font-semibold">{sessions * 25}min</p>
+          <p className="text-2xl font-semibold">{totalFocusMinutes}min</p>
         </Card>
         <Card className="p-4 bg-card border-border text-center">
           <p className="text-xs text-muted-foreground mb-1">Meta Diária</p>
-          <p className="text-2xl font-semibold">{sessions}/8</p>
+          <p className="text-2xl font-semibold">{totalSessions}/{dailyGoal}</p>
         </Card>
       </div>
+
+      {!user && (
+        <p className="text-center text-muted-foreground text-sm">
+          Faça login para salvar suas sessões permanentemente
+        </p>
+      )}
     </div>
   );
 };
