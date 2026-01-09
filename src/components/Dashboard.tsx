@@ -10,6 +10,7 @@ import { useHabits } from '@/hooks/useHabits';
 import { useGoals } from '@/hooks/useGoals';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/hooks/useAuth';
+import { useGamification } from '@/hooks/useGamification';
 import { 
   Calendar, 
   CheckSquare, 
@@ -34,8 +35,9 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { userStats, settings } = useAppStore();
+  const { settings } = useAppStore();
   const { user } = useAuth();
+  const { stats, xpToNextLevel, currentLevelXP, xpProgress } = useGamification();
   
   // Supabase data hooks
   const { tasks, loading: tasksLoading, toggleTask } = useTasks();
@@ -100,7 +102,7 @@ const Dashboard = () => {
                 {greeting()} 👋
               </h1>
               <p className="text-muted-foreground text-sm md:text-base">
-                Aqui está sua visão geral do dia. Você está no nível {userStats.level}!
+                Aqui está sua visão geral do dia. Você está no nível {stats.level}!
               </p>
             </div>
             
@@ -109,13 +111,13 @@ const Dashboard = () => {
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border">
                 <div className="flex items-center gap-1.5">
                   <Flame className="h-4 w-4 text-warning animate-pulse" />
-                  <span className="font-semibold text-sm">{userStats.currentStreak}</span>
+                  <span className="font-semibold text-sm">{stats.streak}</span>
                   <span className="text-xs text-muted-foreground">dias</span>
                 </div>
                 <div className="w-px h-4 bg-border" />
                 <div className="flex items-center gap-1.5">
                   <Zap className="h-4 w-4 text-accent" />
-                  <span className="font-semibold text-sm">Nv. {userStats.level}</span>
+                  <span className="font-semibold text-sm">Nv. {stats.level}</span>
                 </div>
               </div>
             </div>
@@ -124,13 +126,13 @@ const Dashboard = () => {
           {/* XP Progress Bar */}
           <div className="mb-6">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-              <span>XP: {userStats.xp} / {userStats.xpToNextLevel}</span>
-              <span>Próximo nível: {userStats.level + 1}</span>
+              <span>XP: {currentLevelXP} / {xpToNextLevel}</span>
+              <span>Próximo nível: {stats.level + 1}</span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className="h-full bg-accent transition-all duration-500 rounded-full"
-                style={{ width: `${(userStats.xp / userStats.xpToNextLevel) * 100}%` }}
+                style={{ width: `${xpProgress}%` }}
               />
             </div>
           </div>
@@ -425,7 +427,7 @@ const Dashboard = () => {
                 <div className="flex items-start gap-2">
                   <ChevronRight className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                   <p className="text-sm">
-                    Sua sequência de <span className="text-warning font-medium">{userStats.currentStreak} dias</span> está 
+                    Sua sequência de <span className="text-warning font-medium">{stats.streak} dias</span> está 
                     ótima! Continue assim.
                   </p>
                 </div>
