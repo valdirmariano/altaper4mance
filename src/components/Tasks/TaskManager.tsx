@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTasks } from '@/hooks/useTasks';
 import { useAuth } from '@/hooks/useAuth';
+import { useGamification } from '@/hooks/useGamification';
 import { 
   CheckCircle2, 
   Plus, 
@@ -25,16 +26,16 @@ import {
 
 const TaskManager = () => {
   const { user } = useAuth();
-  const { tasks, loading, addTask, updateTask, deleteTask } = useTasks();
+  const { rewardTaskComplete } = useGamification();
+  const { tasks, loading, addTask, updateTask, deleteTask, toggleTask } = useTasks(rewardTaskComplete);
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<'list' | 'kanban' | 'timeline'>('list');
 
-  const toggleTask = async (taskId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'done' ? 'todo' : 'done';
-    await updateTask(taskId, { status: newStatus });
+  const handleToggleTask = async (taskId: string) => {
+    await toggleTask(taskId);
   };
 
   const handleAddTask = async () => {
@@ -252,8 +253,8 @@ const TaskManager = () => {
               task.status === 'done' ? 'opacity-75' : ''
             }`}>
               <div className="flex items-start gap-4">
-                <button
-                  onClick={() => toggleTask(task.id, task.status)}
+                  <button
+                    onClick={() => handleToggleTask(task.id)}
                   className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                     task.status === 'done' 
                       ? 'bg-success border-success shadow-success' 

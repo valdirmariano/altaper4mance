@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+// Gamification callback type
+type GamificationCallback = ((allCompleted: boolean) => Promise<void>) | null;
+
 export interface Habit {
   id: string;
   title: string;
@@ -24,7 +27,7 @@ export interface HabitLog {
   notes: string | null;
 }
 
-export const useHabits = () => {
+export const useHabits = (onHabitComplete?: GamificationCallback) => {
   const { user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
@@ -104,6 +107,8 @@ export const useHabits = () => {
     );
 
     try {
+      let wasCompleted = false;
+      
       if (existingLog) {
         // Toggle existing log
         const newCompleted = !existingLog.completed;
@@ -116,6 +121,8 @@ export const useHabits = () => {
         setHabitLogs(prev => 
           prev.map(log => log.id === existingLog.id ? { ...log, completed: newCompleted } : log)
         );
+
+        wasCompleted = newCompleted;
 
         // Update streak
         const habit = habits.find(h => h.id === habitId);
@@ -139,6 +146,7 @@ export const useHabits = () => {
 
         if (error) throw error;
         setHabitLogs(prev => [data, ...prev]);
+        wasCompleted = true;
 
         // Update streak
         const habit = habits.find(h => h.id === habitId);
@@ -147,6 +155,21 @@ export const useHabits = () => {
           await supabase.from('habits').update({ streak: newStreak }).eq('id', habitId);
           setHabits(prev => prev.map(h => h.id === habitId ? { ...h, streak: newStreak } : h));
         }
+      }
+
+      // Award XP when completing a habit
+      if (wasCompleted && onHabitComplete) {
+        // Check if all habits are completed today
+        const updatedLogs = existingLog 
+          ? habitLogs.map(log => log.id === existingLog.id ? { ...log, completed: true } : log)
+          : [...habitLogs, { habit_id: habitId, logged_date: today, completed: true } as any];
+        
+        const completedToday = updatedLogs.filter(
+          log => log.logged_date === today && log.completed
+        ).length;
+        const allCompleted = completedToday >= habits.length;
+        
+        await onHabitComplete(allCompleted);
       }
     } catch (error: any) {
       console.error('Error toggling habit:', error);

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { useHabits } from '@/hooks/useHabits';
 import { useAuth } from '@/hooks/useAuth';
+import { useGamification } from '@/hooks/useGamification';
 import { 
   Plus, 
   Flame, 
@@ -42,7 +43,8 @@ import {
 
 const HabitsManager = () => {
   const { user } = useAuth();
-  const { habits, habitLogs, loading, addHabit, deleteHabit, toggleHabitToday, isHabitCompletedOnDate } = useHabits();
+  const { rewardHabitComplete } = useGamification();
+  const { habits, habitLogs, loading, addHabit, deleteHabit, toggleHabitToday, isHabitCompletedOnDate } = useHabits(rewardHabitComplete);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newHabit, setNewHabit] = useState({ 
     title: '', 
