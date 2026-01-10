@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+// Gamification callback type
+type GamificationCallback = ((priority: string) => Promise<void>) | null;
+
 export interface Task {
   id: string;
   title: string;
@@ -18,7 +21,7 @@ export interface Task {
   updated_at: string;
 }
 
-export const useTasks = () => {
+export const useTasks = (onTaskComplete?: GamificationCallback) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +102,12 @@ export const useTasks = () => {
     if (!task) return;
 
     const newStatus = task.status === 'done' ? 'todo' : 'done';
-    await updateTask(id, { status: newStatus });
+    const result = await updateTask(id, { status: newStatus });
+    
+    // Award XP when completing a task (not when uncompleting)
+    if (result && newStatus === 'done' && onTaskComplete) {
+      await onTaskComplete(task.priority);
+    }
   };
 
   const deleteTask = async (id: string) => {
