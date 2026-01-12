@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useAuth } from '@/hooks/useAuth';
+import { useGamification } from '@/hooks/useGamification';
 import { toast } from 'sonner';
 import { 
   Play,
@@ -18,7 +19,13 @@ import {
 
 const PomodoroTimer = () => {
   const { user } = useAuth();
-  const { sessionsCount, focusMinutes, dailyGoal, incrementSession } = usePomodoro();
+  const { rewardPomodoroSession } = useGamification();
+  
+  const handlePomodoroReward = () => {
+    rewardPomodoroSession();
+  };
+  
+  const { sessionsCount, focusMinutes, dailyGoal, incrementSession } = usePomodoro(handlePomodoroReward);
   
   const [mode, setMode] = useState<'focus' | 'short-break' | 'long-break'>('focus');
   const [timeLeft, setTimeLeft] = useState(25 * 60);

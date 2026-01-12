@@ -12,7 +12,9 @@ export interface PomodoroSession {
   updated_at: string;
 }
 
-export const usePomodoro = () => {
+export type PomodoroGamificationCallback = () => void;
+
+export const usePomodoro = (onSessionComplete?: PomodoroGamificationCallback) => {
   const [todaySession, setTodaySession] = useState<PomodoroSession | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -65,6 +67,7 @@ export const usePomodoro = () => {
 
         if (error) throw error;
         setTodaySession(data as PomodoroSession);
+        onSessionComplete?.();
       } else {
         const { data, error } = await supabase
           .from('pomodoro_sessions')
@@ -80,6 +83,7 @@ export const usePomodoro = () => {
 
         if (error) throw error;
         setTodaySession(data as PomodoroSession);
+        onSessionComplete?.();
       }
     } catch (error) {
       console.error('Error updating pomodoro session:', error);
