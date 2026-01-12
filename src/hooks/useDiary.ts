@@ -15,7 +15,9 @@ interface JournalEntry {
   created_at: string;
 }
 
-export const useDiary = () => {
+export type DiaryGamificationCallback = (isNewEntry: boolean) => void;
+
+export const useDiary = (onGamificationReward?: DiaryGamificationCallback) => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,8 @@ export const useDiary = () => {
 
         if (error) throw error;
         setEntries(prev => prev.map(e => e.id === existingEntry.id ? updated : e));
+        // Atualização de entrada existente - recompensa menor
+        onGamificationReward?.(false);
         return updated;
       } else {
         const { data: created, error } = await supabase
@@ -99,6 +103,8 @@ export const useDiary = () => {
 
         if (error) throw error;
         setEntries(prev => [created, ...prev]);
+        // Nova entrada - recompensa completa
+        onGamificationReward?.(true);
         return created;
       }
     } catch (error) {

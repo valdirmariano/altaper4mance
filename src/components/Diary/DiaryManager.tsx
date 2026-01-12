@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useDiary } from '@/hooks/useDiary';
 import { useHabits } from '@/hooks/useHabits';
+import { useGamification } from '@/hooks/useGamification';
 import { toast } from 'sonner';
 import { 
   ChevronLeft,
@@ -20,7 +21,15 @@ import {
 
 const DiaryManager = () => {
   const { user } = useAuth();
-  const { getEntryByDate, saveEntry, loading: diaryLoading } = useDiary();
+  const { rewardJournalEntry } = useGamification();
+  
+  const handleDiaryReward = (isNewEntry: boolean) => {
+    if (isNewEntry) {
+      rewardJournalEntry();
+    }
+  };
+  
+  const { getEntryByDate, saveEntry, loading: diaryLoading } = useDiary(handleDiaryReward);
   const { habits, loading: habitsLoading, checkHabitOnDate, toggleHabitToday } = useHabits();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
