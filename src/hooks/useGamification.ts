@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { 
+  triggerLevelUpConfetti, 
+  triggerBadgeConfetti, 
+  triggerStreakConfetti,
+  triggerPerfectDayConfetti 
+} from '@/components/Gamification/AchievementNotification';
 
 export interface UserStats {
   level: number;
@@ -183,21 +189,25 @@ export function useGamification() {
         const badge = BADGE_DEFINITIONS.find(b => b.id === 'level_10')!;
         newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
         toast.success(`🏆 Novo badge desbloqueado: ${badge.name}!`);
+        triggerBadgeConfetti();
       }
       if (newLevel >= 25 && !stats.badges.find(b => b.id === 'level_25')) {
         const badge = BADGE_DEFINITIONS.find(b => b.id === 'level_25')!;
         newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
         toast.success(`🏆 Novo badge desbloqueado: ${badge.name}!`);
+        triggerBadgeConfetti();
       }
       if (newLevel >= 50 && !stats.badges.find(b => b.id === 'level_50')) {
         const badge = BADGE_DEFINITIONS.find(b => b.id === 'level_50')!;
         newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
         toast.success(`🏆 Novo badge desbloqueado: ${badge.name}!`);
+        triggerBadgeConfetti();
       }
 
       toast.success(`🎉 Parabéns! Você subiu para o nível ${newLevel}!`, {
         duration: 5000,
       });
+      triggerLevelUpConfetti(newLevel);
     }
 
     // Show XP toast
@@ -235,16 +245,19 @@ export function useGamification() {
       const badge = BADGE_DEFINITIONS.find(b => b.id === 'streak_7')!;
       newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
       toast.success(`🔥 Novo badge desbloqueado: ${badge.name}!`);
+      triggerStreakConfetti(newStreak);
     }
     if (newStreak >= 30 && !stats.badges.find(b => b.id === 'streak_30')) {
       const badge = BADGE_DEFINITIONS.find(b => b.id === 'streak_30')!;
       newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
       toast.success(`🏆 Novo badge desbloqueado: ${badge.name}!`);
+      triggerStreakConfetti(newStreak);
     }
     if (newStreak >= 100 && !stats.badges.find(b => b.id === 'streak_100')) {
       const badge = BADGE_DEFINITIONS.find(b => b.id === 'streak_100')!;
       newStats.badges = [...newStats.badges, { ...badge, unlockedAt: new Date().toISOString() }];
       toast.success(`👑 Novo badge desbloqueado: ${badge.name}!`);
+      triggerStreakConfetti(newStreak);
     }
 
     setStats(newStats);
@@ -272,6 +285,8 @@ export function useGamification() {
       description: newBadge.description,
       duration: 5000,
     });
+    
+    triggerBadgeConfetti();
 
     setStats(newStats);
     await saveStats(newStats);
@@ -288,6 +303,7 @@ export function useGamification() {
     await addXP(XP_REWARDS.COMPLETE_HABIT, 'Hábito completado');
     if (allCompleted) {
       await addXP(XP_REWARDS.COMPLETE_ALL_HABITS, 'Dia perfeito de hábitos! 🌟');
+      triggerPerfectDayConfetti();
     }
     await updateStreak();
   }, [addXP, updateStreak]);
