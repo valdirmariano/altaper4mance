@@ -41,6 +41,7 @@ const XP_REWARDS = {
   RUNNING_SESSION: 20,
   WORKOUT_SESSION: 20,
   BODY_MEASUREMENT: 5,
+  REGISTER_MEAL: 10,
 };
 
 // Level thresholds
@@ -82,6 +83,11 @@ const BADGE_DEFINITIONS: Omit<Badge, 'unlockedAt'>[] = [
   { id: 'runner_50km', name: 'Maratonista', description: 'Corra 50km no total', icon: '🥇', category: 'special' },
   { id: 'athlete_20', name: 'Atleta', description: 'Complete 20 treinos', icon: '💪', category: 'special' },
   { id: 'hercules', name: 'Hercules', description: 'Complete 50 treinos', icon: '🦸', category: 'special' },
+  
+  // Nutrition badges
+  { id: 'nutrition_10', name: 'Nutricionista', description: 'Registre 10 refeições', icon: '🥗', category: 'special' },
+  { id: 'nutrition_50', name: 'Chef Saudável', description: 'Registre 50 refeições', icon: '👨‍🍳', category: 'special' },
+  { id: 'nutrition_100', name: 'Mestre da Nutrição', description: 'Registre 100 refeições', icon: '🏆', category: 'special' },
   
   // Special badges
   { id: 'level_10', name: 'Veterano', description: 'Alcance nível 10', icon: '⭐', category: 'special' },
@@ -517,11 +523,46 @@ export function useGamification() {
     await addXP(XP_REWARDS.BODY_MEASUREMENT, 'Medida registrada');
   }, [addXP]);
 
+  // Check and award nutrition badges based on real data
+  const checkNutritionBadges = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data: meals } = await supabase
+        .from('meals')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (meals) {
+        const totalMeals = meals.length;
+
+        if (totalMeals >= 10 && !stats.badges.find(b => b.id === 'nutrition_10')) {
+          await awardBadge('nutrition_10');
+        }
+        if (totalMeals >= 50 && !stats.badges.find(b => b.id === 'nutrition_50')) {
+          await awardBadge('nutrition_50');
+        }
+        if (totalMeals >= 100 && !stats.badges.find(b => b.id === 'nutrition_100')) {
+          await awardBadge('nutrition_100');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking nutrition badges:', error);
+    }
+  }, [user, stats.badges, awardBadge]);
+
+  const rewardMealRegistered = useCallback(async () => {
+    await addXP(XP_REWARDS.REGISTER_MEAL, 'Refeição registrada 🥗');
+    await updateStreak();
+    await checkNutritionBadges();
+  }, [addXP, updateStreak, checkNutritionBadges]);
+
   // Calculate XP needed for next level
   const xpToNextLevel = getLevelThreshold(stats.level);
   const currentLevelXP = stats.xp - (stats.level > 1 
     ? Array.from({ length: stats.level - 1 }, (_, i) => getLevelThreshold(i + 1)).reduce((a, b) => a + b, 0) 
     : 0);
+  const xpProgress = Math.min((currentLevelXP / xpToNextLevel) * 100, 100);
 
   return {
     stats,
@@ -540,9 +581,10 @@ export function useGamification() {
     rewardRunningSession,
     rewardWorkoutSession,
     rewardBodyMeasurement,
+    rewardMealRegistered,
     xpToNextLevel,
-    currentLevelXP: Math.max(0, currentLevelXP),
-    xpProgress: Math.min(100, (currentLevelXP / xpToNextLevel) * 100),
+    currentLevelXP,
+    xpProgress,
     allBadges: BADGE_DEFINITIONS,
   };
 }
