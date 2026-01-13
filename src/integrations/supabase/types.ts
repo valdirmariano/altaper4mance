@@ -301,6 +301,51 @@ export type Database = {
         }
         Relationships: []
       }
+      meals: {
+        Row: {
+          calories: number | null
+          carbs_g: number | null
+          created_at: string
+          date: string
+          description: string | null
+          fat_g: number | null
+          id: string
+          meal_type: string
+          name: string
+          photo_url: string | null
+          protein_g: number | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          fat_g?: number | null
+          id?: string
+          meal_type: string
+          name: string
+          photo_url?: string | null
+          protein_g?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs_g?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          fat_g?: number | null
+          id?: string
+          meal_type?: string
+          name?: string
+          photo_url?: string | null
+          protein_g?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           category: string
@@ -331,6 +376,42 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      nutrition_goals: {
+        Row: {
+          carbs_g: number | null
+          created_at: string
+          daily_calories: number | null
+          fat_g: number | null
+          id: string
+          protein_g: number | null
+          updated_at: string
+          user_id: string
+          water_liters: number | null
+        }
+        Insert: {
+          carbs_g?: number | null
+          created_at?: string
+          daily_calories?: number | null
+          fat_g?: number | null
+          id?: string
+          protein_g?: number | null
+          updated_at?: string
+          user_id: string
+          water_liters?: number | null
+        }
+        Update: {
+          carbs_g?: number | null
+          created_at?: string
+          daily_calories?: number | null
+          fat_g?: number | null
+          id?: string
+          protein_g?: number | null
+          updated_at?: string
+          user_id?: string
+          water_liters?: number | null
         }
         Relationships: []
       }
