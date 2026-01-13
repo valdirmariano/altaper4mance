@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, TrendingUp, Timer, MapPin, Trash2, Activity } from 'lucide-react';
 import { useHealth } from '@/hooks/useHealth';
+import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -22,6 +23,8 @@ const RunningManager = () => {
     runningStats 
   } = useHealth();
   
+  const { rewardRunningSession } = useGamification();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -31,7 +34,7 @@ const RunningManager = () => {
     notes: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     addRunningSession.mutate({
       date: formData.date,
@@ -40,6 +43,10 @@ const RunningManager = () => {
       terrain: formData.terrain,
       notes: formData.notes || null,
       pace: null,
+    }, {
+      onSuccess: () => {
+        rewardRunningSession();
+      }
     });
     setFormData({
       date: format(new Date(), 'yyyy-MM-dd'),

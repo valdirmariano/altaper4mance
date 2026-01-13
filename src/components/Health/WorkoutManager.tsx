@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Dumbbell, Timer, Trash2, X } from 'lucide-react';
 import { useHealth, Exercise } from '@/hooks/useHealth';
+import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -34,6 +35,8 @@ const WorkoutManager = () => {
     deleteWorkoutSession,
     workoutStats 
   } = useHealth();
+  
+  const { rewardWorkoutSession } = useGamification();
   
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,7 +65,7 @@ const WorkoutManager = () => {
     setExercises(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     addWorkoutSession.mutate({
       date: formData.date,
@@ -71,6 +74,10 @@ const WorkoutManager = () => {
       duration_minutes: formData.duration_minutes ? parseInt(formData.duration_minutes) : null,
       exercises,
       notes: formData.notes || null,
+    }, {
+      onSuccess: () => {
+        rewardWorkoutSession();
+      }
     });
     setFormData({
       date: format(new Date(), 'yyyy-MM-dd'),
