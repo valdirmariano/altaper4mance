@@ -301,12 +301,64 @@ export function useGamification() {
     await saveStats(newStats);
   }, [user, stats, saveStats]);
 
+  // Check and award productivity badges based on real data
+  const checkProductivityBadges = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Check completed tasks
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'done');
+
+      if (tasks) {
+        const totalTasks = tasks.length;
+
+        if (totalTasks >= 10 && !stats.badges.find(b => b.id === 'tasks_10')) {
+          await awardBadge('tasks_10');
+        }
+        if (totalTasks >= 50 && !stats.badges.find(b => b.id === 'tasks_50')) {
+          await awardBadge('tasks_50');
+        }
+        if (totalTasks >= 100 && !stats.badges.find(b => b.id === 'tasks_100')) {
+          await awardBadge('tasks_100');
+        }
+      }
+
+      // Check completed goals
+      const { data: goals } = await supabase
+        .from('goals')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'achieved');
+
+      if (goals) {
+        const totalGoals = goals.length;
+
+        if (totalGoals >= 1 && !stats.badges.find(b => b.id === 'goals_1')) {
+          await awardBadge('goals_1');
+        }
+        if (totalGoals >= 5 && !stats.badges.find(b => b.id === 'goals_5')) {
+          await awardBadge('goals_5');
+        }
+        if (totalGoals >= 10 && !stats.badges.find(b => b.id === 'goals_10')) {
+          await awardBadge('goals_10');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking productivity badges:', error);
+    }
+  }, [user, stats.badges, awardBadge]);
+
   // Reward handlers for different actions
   const rewardTaskComplete = useCallback(async (priority: string) => {
     const xp = priority === 'p0' ? XP_REWARDS.COMPLETE_TASK_P0 : XP_REWARDS.COMPLETE_TASK;
     await addXP(xp, 'Tarefa concluída');
     await updateStreak();
-  }, [addXP, updateStreak]);
+    await checkProductivityBadges();
+  }, [addXP, updateStreak, checkProductivityBadges]);
 
   const rewardHabitComplete = useCallback(async (allCompleted: boolean) => {
     await addXP(XP_REWARDS.COMPLETE_HABIT, 'Hábito completado');
@@ -320,7 +372,8 @@ export function useGamification() {
   const rewardGoalComplete = useCallback(async () => {
     await addXP(XP_REWARDS.COMPLETE_GOAL, 'Meta alcançada! 🎯');
     await updateStreak();
-  }, [addXP, updateStreak]);
+    await checkProductivityBadges();
+  }, [addXP, updateStreak, checkProductivityBadges]);
 
   const rewardJournalEntry = useCallback(async () => {
     await addXP(XP_REWARDS.JOURNAL_ENTRY, 'Entrada no diário');
