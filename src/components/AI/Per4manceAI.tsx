@@ -34,7 +34,7 @@ export default function Per4manceAI() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Olá! 👋 Sou o **Per4mance AI**, seu assistente pessoal de produtividade. Posso ajudar você a:\n\n🎯 **Criar tarefas, projetos e metas** automaticamente\n💰 **Registrar despesas** a partir de fotos de notas fiscais\n📊 **Analisar sua produtividade** e sugerir melhorias\n🏃 **Acompanhar seus hábitos** e manter seu streak\n\nComo posso ajudar você hoje?',
+      content: 'Olá! 👋 Sou o **Per4mance AI**, seu assistente pessoal de produtividade com **visão inteligente**.\n\n📸 **Envie qualquer imagem** e eu analiso para você:\n• 📋 Lista de tarefas escritas à mão → crio tarefas automaticamente\n• 💰 Notas fiscais e recibos → registro despesas\n• 🥗 Planos de dieta → organizo suas refeições\n• 💪 Fichas de treino → acompanho seu progresso\n• 📚 Anotações de estudo → transcrevo e resumo\n\n🎯 **Também posso:**\n• Criar tarefas, projetos, metas e hábitos\n• Analisar sua produtividade e finanças\n• Sugerir melhorias personalizadas\n\nEnvie uma foto ou me diga como posso ajudar! 🚀',
       timestamp: new Date(),
     },
   ]);
