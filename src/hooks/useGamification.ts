@@ -341,15 +341,67 @@ export function useGamification() {
     await updateStreak();
   }, [addXP, updateStreak]);
 
+  // Check and award fitness badges based on real data
+  const checkFitnessBadges = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Check running stats
+      const { data: runs } = await supabase
+        .from('running_sessions')
+        .select('distance_km')
+        .eq('user_id', user.id);
+
+      if (runs) {
+        const totalRuns = runs.length;
+        const totalKm = runs.reduce((sum, r) => sum + (r.distance_km || 0), 0);
+
+        // Runner badge - 10 corridas
+        if (totalRuns >= 10 && !stats.badges.find(b => b.id === 'runner_10')) {
+          await awardBadge('runner_10');
+        }
+
+        // Marathoner badge - 50km total
+        if (totalKm >= 50 && !stats.badges.find(b => b.id === 'runner_50km')) {
+          await awardBadge('runner_50km');
+        }
+      }
+
+      // Check workout stats
+      const { data: workouts } = await supabase
+        .from('workout_sessions')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (workouts) {
+        const totalWorkouts = workouts.length;
+
+        // Athlete badge - 20 treinos
+        if (totalWorkouts >= 20 && !stats.badges.find(b => b.id === 'athlete_20')) {
+          await awardBadge('athlete_20');
+        }
+
+        // Hercules badge - 50 treinos
+        if (totalWorkouts >= 50 && !stats.badges.find(b => b.id === 'hercules')) {
+          await awardBadge('hercules');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking fitness badges:', error);
+    }
+  }, [user, stats.badges, awardBadge]);
+
   const rewardRunningSession = useCallback(async () => {
     await addXP(XP_REWARDS.RUNNING_SESSION, 'Corrida completada 🏃');
     await updateStreak();
-  }, [addXP, updateStreak]);
+    await checkFitnessBadges();
+  }, [addXP, updateStreak, checkFitnessBadges]);
 
   const rewardWorkoutSession = useCallback(async () => {
     await addXP(XP_REWARDS.WORKOUT_SESSION, 'Treino completado 💪');
     await updateStreak();
-  }, [addXP, updateStreak]);
+    await checkFitnessBadges();
+  }, [addXP, updateStreak, checkFitnessBadges]);
 
   const rewardBodyMeasurement = useCallback(async () => {
     await addXP(XP_REWARDS.BODY_MEASUREMENT, 'Medida registrada');
