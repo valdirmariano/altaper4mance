@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Scale, Ruler, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useHealth } from '@/hooks/useHealth';
+import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -20,6 +21,8 @@ const BodyMeasurementsManager = () => {
     deleteBodyMeasurement,
     latestMeasurement 
   } = useHealth();
+  
+  const { rewardBodyMeasurement } = useGamification();
   
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,7 +37,7 @@ const BodyMeasurementsManager = () => {
     notes: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     addBodyMeasurement.mutate({
       date: formData.date,
@@ -46,6 +49,10 @@ const BodyMeasurementsManager = () => {
       leg_cm: formData.leg_cm ? parseFloat(formData.leg_cm) : null,
       body_fat_percent: formData.body_fat_percent ? parseFloat(formData.body_fat_percent) : null,
       notes: formData.notes || null,
+    }, {
+      onSuccess: () => {
+        rewardBodyMeasurement();
+      }
     });
     setFormData({
       date: format(new Date(), 'yyyy-MM-dd'),

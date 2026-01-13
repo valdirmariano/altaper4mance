@@ -37,6 +37,9 @@ const XP_REWARDS = {
   POMODORO_SESSION: 20,
   REGISTER_TRANSACTION: 5,
   STUDY_SESSION: 15,
+  RUNNING_SESSION: 20,
+  WORKOUT_SESSION: 20,
+  BODY_MEASUREMENT: 5,
 };
 
 // Level thresholds
@@ -64,6 +67,12 @@ const BADGE_DEFINITIONS: Omit<Badge, 'unlockedAt'>[] = [
   { id: 'goals_1', name: 'Visionário', description: 'Alcance sua primeira meta', icon: '🎯', category: 'goals' },
   { id: 'goals_5', name: 'Conquistador', description: 'Alcance 5 metas', icon: '🏅', category: 'goals' },
   { id: 'goals_10', name: 'Elite', description: 'Alcance 10 metas', icon: '🌍', category: 'goals' },
+  
+  // Health/Fitness badges
+  { id: 'runner_10', name: 'Corredor', description: 'Complete 10 corridas', icon: '🏃', category: 'special' },
+  { id: 'runner_50km', name: 'Maratonista', description: 'Corra 50km no total', icon: '🥇', category: 'special' },
+  { id: 'athlete_20', name: 'Atleta', description: 'Complete 20 treinos', icon: '💪', category: 'special' },
+  { id: 'hercules', name: 'Hercules', description: 'Complete 50 treinos', icon: '🦸', category: 'special' },
   
   // Special badges
   { id: 'level_10', name: 'Veterano', description: 'Alcance nível 10', icon: '⭐', category: 'special' },
@@ -332,6 +341,20 @@ export function useGamification() {
     await updateStreak();
   }, [addXP, updateStreak]);
 
+  const rewardRunningSession = useCallback(async () => {
+    await addXP(XP_REWARDS.RUNNING_SESSION, 'Corrida completada 🏃');
+    await updateStreak();
+  }, [addXP, updateStreak]);
+
+  const rewardWorkoutSession = useCallback(async () => {
+    await addXP(XP_REWARDS.WORKOUT_SESSION, 'Treino completado 💪');
+    await updateStreak();
+  }, [addXP, updateStreak]);
+
+  const rewardBodyMeasurement = useCallback(async () => {
+    await addXP(XP_REWARDS.BODY_MEASUREMENT, 'Medida registrada');
+  }, [addXP]);
+
   // Calculate XP needed for next level
   const xpToNextLevel = getLevelThreshold(stats.level);
   const currentLevelXP = stats.xp - (stats.level > 1 
@@ -351,6 +374,9 @@ export function useGamification() {
     rewardPomodoroSession,
     rewardTransaction,
     rewardStudySession,
+    rewardRunningSession,
+    rewardWorkoutSession,
+    rewardBodyMeasurement,
     xpToNextLevel,
     currentLevelXP: Math.max(0, currentLevelXP),
     xpProgress: Math.min(100, (currentLevelXP / xpToNextLevel) * 100),
