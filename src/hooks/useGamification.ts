@@ -23,7 +23,7 @@ export interface Badge {
   description: string;
   icon: string;
   unlockedAt: string;
-  category: 'streak' | 'tasks' | 'habits' | 'goals' | 'finance' | 'special';
+  category: 'streak' | 'tasks' | 'habits' | 'goals' | 'finance' | 'studies' | 'special';
 }
 
 // XP rewards configuration
@@ -37,6 +37,7 @@ const XP_REWARDS = {
   POMODORO_SESSION: 20,
   REGISTER_TRANSACTION: 5,
   STUDY_SESSION: 15,
+  COMPLETE_COURSE: 100,
   RUNNING_SESSION: 20,
   WORKOUT_SESSION: 20,
   BODY_MEASUREMENT: 5,
@@ -67,6 +68,14 @@ const BADGE_DEFINITIONS: Omit<Badge, 'unlockedAt'>[] = [
   { id: 'goals_1', name: 'Visionário', description: 'Alcance sua primeira meta', icon: '🎯', category: 'goals' },
   { id: 'goals_5', name: 'Conquistador', description: 'Alcance 5 metas', icon: '🏅', category: 'goals' },
   { id: 'goals_10', name: 'Elite', description: 'Alcance 10 metas', icon: '🌍', category: 'goals' },
+  
+  // Studies badges
+  { id: 'student_first', name: 'Estudante', description: 'Complete seu primeiro curso', icon: '📚', category: 'studies' },
+  { id: 'student_5', name: 'Aprendiz', description: 'Complete 5 cursos', icon: '🎓', category: 'studies' },
+  { id: 'student_10', name: 'Erudito', description: 'Complete 10 cursos', icon: '🧠', category: 'studies' },
+  { id: 'study_10h', name: 'Dedicado', description: 'Estude 10 horas no total', icon: '⏱️', category: 'studies' },
+  { id: 'study_50h', name: 'Estudioso', description: 'Estude 50 horas no total', icon: '📖', category: 'studies' },
+  { id: 'study_100h', name: 'Scholar', description: 'Estude 100 horas no total', icon: '🏛️', category: 'studies' },
   
   // Health/Fitness badges
   { id: 'runner_10', name: 'Corredor', description: 'Complete 10 corridas', icon: '🏃', category: 'special' },
@@ -389,10 +398,58 @@ export function useGamification() {
     await addXP(XP_REWARDS.REGISTER_TRANSACTION, 'Transação registrada');
   }, [addXP]);
 
+  // Check and award study badges based on real data
+  const checkStudyBadges = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('status, completed_hours')
+        .eq('user_id', user.id);
+
+      if (courses) {
+        const completedCourses = courses.filter(c => c.status === 'completed').length;
+        const totalHours = courses.reduce((sum, c) => sum + (c.completed_hours || 0), 0);
+
+        // Course completion badges
+        if (completedCourses >= 1 && !stats.badges.find(b => b.id === 'student_first')) {
+          await awardBadge('student_first');
+        }
+        if (completedCourses >= 5 && !stats.badges.find(b => b.id === 'student_5')) {
+          await awardBadge('student_5');
+        }
+        if (completedCourses >= 10 && !stats.badges.find(b => b.id === 'student_10')) {
+          await awardBadge('student_10');
+        }
+
+        // Study hours badges
+        if (totalHours >= 10 && !stats.badges.find(b => b.id === 'study_10h')) {
+          await awardBadge('study_10h');
+        }
+        if (totalHours >= 50 && !stats.badges.find(b => b.id === 'study_50h')) {
+          await awardBadge('study_50h');
+        }
+        if (totalHours >= 100 && !stats.badges.find(b => b.id === 'study_100h')) {
+          await awardBadge('study_100h');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking study badges:', error);
+    }
+  }, [user, stats.badges, awardBadge]);
+
   const rewardStudySession = useCallback(async () => {
     await addXP(XP_REWARDS.STUDY_SESSION, 'Sessão de estudo');
     await updateStreak();
-  }, [addXP, updateStreak]);
+    await checkStudyBadges();
+  }, [addXP, updateStreak, checkStudyBadges]);
+
+  const rewardCourseComplete = useCallback(async () => {
+    await addXP(XP_REWARDS.COMPLETE_COURSE, 'Curso concluído! 🎓');
+    await updateStreak();
+    await checkStudyBadges();
+  }, [addXP, updateStreak, checkStudyBadges]);
 
   // Check and award fitness badges based on real data
   const checkFitnessBadges = useCallback(async () => {
@@ -479,6 +536,7 @@ export function useGamification() {
     rewardPomodoroSession,
     rewardTransaction,
     rewardStudySession,
+    rewardCourseComplete,
     rewardRunningSession,
     rewardWorkoutSession,
     rewardBodyMeasurement,
