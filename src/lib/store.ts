@@ -108,10 +108,12 @@ export interface UserStats {
 
 export interface Settings {
   theme: 'dark' | 'light';
-  accentColor: 'cyan' | 'coral' | 'purple' | 'green' | 'yellow' | 'pink' | 'blue' | 'orange';
+  accentColor: string; // ID do tema de cor (ex: 'white', 'cyan', 'purple', etc.)
   notifications: boolean;
   soundEnabled: boolean;
   language: 'pt-BR';
+  compactMode: boolean;
+  animationsEnabled: boolean;
 }
 
 interface AppState {
@@ -222,10 +224,12 @@ export const useAppStore = create<AppState>()(
       
       settings: {
         theme: 'dark',
-        accentColor: 'cyan',
+        accentColor: 'white', // Minimalista como padrão
         notifications: true,
         soundEnabled: true,
         language: 'pt-BR',
+        compactMode: false,
+        animationsEnabled: true,
       },
       
       // Task Actions

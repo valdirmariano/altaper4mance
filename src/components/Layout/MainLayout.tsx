@@ -19,8 +19,10 @@ import RunningManager from '../Health/RunningManager';
 import WorkoutManager from '../Health/WorkoutManager';
 import BodyMeasurementsManager from '../Health/BodyMeasurementsManager';
 import { NutritionManager } from '../Health/NutritionManager';
+import ThemeSettings from '../Settings/ThemeSettings';
 import { useAppStore } from '@/lib/store';
 import { useAuth } from '@/hooks/useAuth';
+import { getThemeById } from '@/lib/themes';
 import { Menu, Bell, Search, User, Sun, Moon, LogOut, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -45,9 +47,16 @@ const MainLayout = () => {
     if (settings.theme === 'light') {
       root.classList.add('light');
     }
-    // Apply accent color
-    root.classList.remove('accent-cyan', 'accent-coral', 'accent-purple', 'accent-green', 'accent-yellow', 'accent-pink', 'accent-blue', 'accent-orange');
-    root.classList.add(`accent-${settings.accentColor}`);
+    // Remove all accent classes and apply selected
+    const accentClasses = ['accent-white', 'accent-cyan', 'accent-coral', 'accent-purple', 'accent-green', 
+      'accent-yellow', 'accent-pink', 'accent-blue', 'accent-orange', 'accent-mint', 
+      'accent-lavender', 'accent-rosegold', 'accent-electric', 'accent-lime', 'accent-ruby', 'accent-neon'];
+    accentClasses.forEach(cls => root.classList.remove(cls));
+    
+    const theme = getThemeById(settings.accentColor);
+    if (theme) {
+      root.classList.add(theme.class);
+    }
   }, [settings.theme, settings.accentColor]);
 
   const toggleTheme = () => {
@@ -85,6 +94,7 @@ const MainLayout = () => {
       case 'workout': return <WorkoutManager />;
       case 'measurements': return <BodyMeasurementsManager />;
       case 'diet': return <NutritionManager />;
+      case 'settings': return <ThemeSettings />;
       default:
         return (
           <div className="p-6 flex items-center justify-center min-h-[50vh]">
