@@ -29,17 +29,21 @@ export interface NutritionGoals {
 }
 
 export const useNutrition = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [goals, setGoals] = useState<NutritionGoals | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    
     if (user) {
       fetchMeals();
       fetchGoals();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchMeals = async () => {
     if (!user) return;
