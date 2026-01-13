@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Utensils, Target, Flame, Beef, Wheat, Droplets, Trash2, Settings } from 'lucide-react';
 import { useNutrition, Meal } from '@/hooks/useNutrition';
+import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -22,6 +23,7 @@ const mealTypes = [
 
 export const NutritionManager = () => {
   const { meals, goals, loading, addMeal, deleteMeal, saveGoals, getTodayMeals, getTodayTotals } = useNutrition();
+  const { rewardMealRegistered } = useGamification();
   const [isAddingMeal, setIsAddingMeal] = useState(false);
   const [isEditingGoals, setIsEditingGoals] = useState(false);
   const [newMeal, setNewMeal] = useState({
@@ -48,6 +50,7 @@ export const NutritionManager = () => {
   const handleAddMeal = async () => {
     if (!newMeal.name) return;
     await addMeal(newMeal);
+    await rewardMealRegistered();
     setNewMeal({
       date: new Date().toISOString().split('T')[0],
       meal_type: 'lunch',
