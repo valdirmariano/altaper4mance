@@ -2,13 +2,14 @@ import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Target, CheckCircle2, Clock, Sparkles, Dumbbell, DollarSign, BookOpen, Timer, Footprints } from 'lucide-react';
+import { Target, CheckCircle2, Clock, Sparkles, Dumbbell, DollarSign, BookOpen, Timer, Footprints, GraduationCap } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useHabits } from '@/hooks/useHabits';
 import { useGamification } from '@/hooks/useGamification';
 import { useHealth } from '@/hooks/useHealth';
 import { useTransactions } from '@/hooks/useTransactions';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { useCourses } from '@/hooks/useCourses';
 
 interface Mission {
   id: string;
@@ -19,7 +20,7 @@ interface Mission {
   xpReward: number;
   icon: React.ReactNode;
   completed: boolean;
-  category: 'tasks' | 'habits' | 'fitness' | 'finance' | 'focus';
+  category: 'tasks' | 'habits' | 'fitness' | 'finance' | 'focus' | 'studies';
 }
 
 const WeeklyMissions: React.FC = () => {
@@ -29,6 +30,7 @@ const WeeklyMissions: React.FC = () => {
   const { runningSessions, workoutSessions } = useHealth();
   const { transactions } = useTransactions();
   const { sessionsCount: pomodoroTodayCount } = usePomodoro();
+  const { courses, getStats: getCourseStats } = useCourses();
 
   // Calculate date ranges
   const { weekStart, weekEnd } = useMemo(() => {
@@ -106,6 +108,11 @@ const WeeklyMissions: React.FC = () => {
       return date >= weekStart && date <= weekEnd;
     }).length;
   }, [transactions, weekStart, weekEnd]);
+
+  // Study stats
+  const courseStats = getCourseStats();
+  const coursesInProgress = courseStats.inProgress;
+  const coursesCompleted = courseStats.completed;
 
   // Streak progress
   const streakProgress = Math.min(stats.streak, 7);
@@ -217,11 +224,34 @@ const WeeklyMissions: React.FC = () => {
         completed: transactionsThisWeek >= 10,
         category: 'finance',
       },
+      // Study missions
+      {
+        id: 'study_courses',
+        title: 'Estudar ativamente',
+        description: 'Tenha ao menos 1 curso em progresso',
+        current: Math.min(coursesInProgress, 1),
+        target: 1,
+        xpReward: 100,
+        icon: <GraduationCap className="h-4 w-4" />,
+        completed: coursesInProgress >= 1,
+        category: 'studies',
+      },
+      {
+        id: 'complete_course',
+        title: 'Concluir um curso',
+        description: 'Finalize pelo menos 1 curso',
+        current: Math.min(coursesCompleted, 1),
+        target: 1,
+        xpReward: 300,
+        icon: <GraduationCap className="h-4 w-4" />,
+        completed: coursesCompleted >= 1,
+        category: 'studies',
+      },
     ];
 
     // Filter and prioritize missions based on user activity
     const activeMissions: Mission[] = [];
-    const categories = ['tasks', 'habits', 'fitness', 'focus', 'finance'] as const;
+    const categories = ['tasks', 'habits', 'fitness', 'focus', 'finance', 'studies'] as const;
     
     // Try to get 1-2 missions per category, prioritizing incomplete ones
     categories.forEach(cat => {
@@ -245,7 +275,7 @@ const WeeklyMissions: React.FC = () => {
       const progressB = b.current / b.target;
       return progressB - progressA;
     });
-  }, [tasksThisWeek, streakProgress, stats.streak, perfectDays, workoutsThisWeek, runsThisWeek, kmThisWeek, pomodoroThisWeek, transactionsThisWeek]);
+  }, [tasksThisWeek, streakProgress, stats.streak, perfectDays, workoutsThisWeek, runsThisWeek, kmThisWeek, pomodoroThisWeek, transactionsThisWeek, coursesInProgress, coursesCompleted]);
 
   const completedMissions = missions.filter(m => m.completed).length;
   const totalXP = missions.reduce((acc, m) => acc + (m.completed ? m.xpReward : 0), 0);
@@ -261,6 +291,7 @@ const WeeklyMissions: React.FC = () => {
       case 'fitness': return 'text-success';
       case 'finance': return 'text-accent';
       case 'focus': return 'text-destructive';
+      case 'studies': return 'text-info';
       default: return 'text-muted-foreground';
     }
   };

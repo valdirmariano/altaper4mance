@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCourses, Course } from '@/hooks/useCourses';
+import { useGamification } from '@/hooks/useGamification';
 import { 
   Plus, 
   BookOpen,
@@ -22,6 +23,7 @@ import {
 
 const StudiesManager = () => {
   const { courses, loading, addCourse, updateCourse, deleteCourse, getStats } = useCourses();
+  const { rewardStudySession, rewardCourseComplete } = useGamification();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newCourse, setNewCourse] = useState({
@@ -68,11 +70,13 @@ const StudiesManager = () => {
       progress: 100,
       completed_hours: course.total_hours 
     });
+    await rewardCourseComplete();
   };
 
   const handleUpdateProgress = async (course: Course, progress: number) => {
     const completed_hours = (progress / 100) * course.total_hours;
     await updateCourse(course.id, { progress, completed_hours });
+    await rewardStudySession();
   };
 
   if (loading) {
