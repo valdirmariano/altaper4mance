@@ -15,6 +15,9 @@ import HabitsManager from '../Habits/HabitsManager';
 import GamificationPanel from '../Gamification/GamificationPanel';
 import Per4manceAI from '../AI/Per4manceAI';
 import AuthModal from '../Auth/AuthModal';
+import RunningManager from '../Health/RunningManager';
+import WorkoutManager from '../Health/WorkoutManager';
+import BodyMeasurementsManager from '../Health/BodyMeasurementsManager';
 import { useAppStore } from '@/lib/store';
 import { useAuth } from '@/hooks/useAuth';
 import { Menu, Bell, Search, User, Sun, Moon, LogOut, Loader2 } from 'lucide-react';
@@ -77,6 +80,9 @@ const MainLayout = () => {
       case 'secondbrain': return <SecondBrain />;
       case 'gamification': return <GamificationPanel />;
       case 'ai': return <Per4manceAI />;
+      case 'running': return <RunningManager />;
+      case 'workout': return <WorkoutManager />;
+      case 'diet': return <BodyMeasurementsManager />;
       default:
         return (
           <div className="p-6 flex items-center justify-center min-h-[50vh]">

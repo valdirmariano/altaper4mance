@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_measurements: {
+        Row: {
+          arm_cm: number | null
+          body_fat_percent: number | null
+          chest_cm: number | null
+          created_at: string
+          date: string
+          height_cm: number | null
+          id: string
+          leg_cm: number | null
+          notes: string | null
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          arm_cm?: number | null
+          body_fat_percent?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          date?: string
+          height_cm?: number | null
+          id?: string
+          leg_cm?: number | null
+          notes?: string | null
+          user_id: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          arm_cm?: number | null
+          body_fat_percent?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          date?: string
+          height_cm?: number | null
+          id?: string
+          leg_cm?: number | null
+          notes?: string | null
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           audio_url: string | null
@@ -367,6 +412,42 @@ export type Database = {
         }
         Relationships: []
       }
+      running_sessions: {
+        Row: {
+          created_at: string
+          date: string
+          distance_km: number
+          duration_minutes: number
+          id: string
+          notes: string | null
+          pace: number | null
+          terrain: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          distance_km: number
+          duration_minutes: number
+          id?: string
+          notes?: string | null
+          pace?: number | null
+          terrain?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          distance_km?: number
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          pace?: number | null
+          terrain?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           actual_hours: number | null
@@ -486,6 +567,42 @@ export type Database = {
           preferences?: Json | null
           stats?: Json | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_sessions: {
+        Row: {
+          created_at: string
+          date: string
+          duration_minutes: number | null
+          exercises: Json | null
+          id: string
+          muscle_group: string | null
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          duration_minutes?: number | null
+          exercises?: Json | null
+          id?: string
+          muscle_group?: string | null
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          duration_minutes?: number | null
+          exercises?: Json | null
+          id?: string
+          muscle_group?: string | null
+          name?: string
+          notes?: string | null
           user_id?: string
         }
         Relationships: []
