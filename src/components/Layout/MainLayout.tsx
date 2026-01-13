@@ -78,7 +78,7 @@ const MainLayout = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Dashboard onNavigateToSection={setActiveSection} />;
       case 'tasks': return <TaskManager />;
       case 'goals': return <GoalsManager />;
       case 'projects': return <ProjectsManager />;

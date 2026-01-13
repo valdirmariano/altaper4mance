@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronDown, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ChevronDown, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeft } from 'lucide-react';
 import {
   Home,
   CheckSquare,
@@ -35,8 +35,11 @@ import {
   Zap,
   Award,
   Sparkles,
-  Trophy
+  Trophy,
+  Flame,
+  Calendar
 } from 'lucide-react';
+import { useGamification } from '@/hooks/useGamification';
 
 interface SidebarProps {
   activeSection: string;
@@ -46,7 +49,8 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggleCollapse }: SidebarProps) => {
-  const [expandedSections, setExpandedSections] = useState<string[]>(['personal', 'professional', 'tools']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['productivity', 'health', 'development']);
+  const { stats } = useGamification();
 
   const toggleSection = (section: string) => {
     if (isCollapsed) return;
@@ -57,64 +61,92 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
     );
   };
 
-  const personalItems = [
-    { id: 'goals', label: 'Metas', icon: Target },
-    { id: 'tasks', label: 'Tarefas', icon: CheckSquare, badge: '5' },
-    { id: 'projects', label: 'Projetos', icon: FolderOpen },
-    { id: 'skills', label: 'Habilidades', icon: Award },
-    { id: 'diary', label: 'Diário', icon: CalendarDays },
-    { id: 'running', label: 'Corrida', icon: TrendingUp },
-    { id: 'workout', label: 'Treino', icon: Dumbbell },
-    { id: 'measurements', label: 'Medidas Corporais', icon: Heart },
-    { id: 'diet', label: 'Nutrição', icon: Utensils },
-    { id: 'studies', label: 'Estudos', icon: BookOpen },
-    { id: 'books', label: 'Livros', icon: BookMarked },
-    { id: 'travel', label: 'Viagens', icon: Plane },
-    { id: 'movies', label: 'Filmes e Séries', icon: Film },
+  // Reorganized menu structure for better UX
+  const mainItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'calendar', label: 'Calendário', icon: Calendar },
   ];
 
-  const professionalItems = [
+  const productivityItems = [
+    { id: 'tasks', label: 'Tarefas', icon: CheckSquare, badge: '5' },
+    { id: 'projects', label: 'Projetos', icon: FolderOpen },
+    { id: 'goals', label: 'Metas', icon: Target },
+    { id: 'habits', label: 'Hábitos', icon: Flame },
+    { id: 'pomodoro', label: 'Foco', icon: Timer },
+  ];
+
+  const healthItems = [
+    { id: 'running', label: 'Corrida', icon: TrendingUp },
+    { id: 'workout', label: 'Treino', icon: Dumbbell },
+    { id: 'measurements', label: 'Medidas', icon: Heart },
+    { id: 'diet', label: 'Nutrição', icon: Utensils },
+  ];
+
+  const developmentItems = [
+    { id: 'studies', label: 'Estudos', icon: BookOpen },
+    { id: 'skills', label: 'Habilidades', icon: Award },
+    { id: 'secondbrain', label: 'Segundo Cérebro', icon: Brain },
+    { id: 'diary', label: 'Diário', icon: CalendarDays },
+  ];
+
+  const financeItems = [
     { id: 'finance', label: 'Finanças', icon: DollarSign },
     { id: 'crm', label: 'CRM', icon: Users },
-    { id: 'content', label: 'Planejador de Conteúdo', icon: FileText },
-    { id: 'competition', label: 'Análise de Concorrência', icon: BarChart3 },
-    { id: 'proposal', label: 'Modelo de Proposta', icon: FileText },
-    { id: 'resume', label: 'Modelo de Currículo', icon: User },
   ];
 
   const toolsItems = [
-    { id: 'gamification', label: 'Gamificação', icon: Trophy },
-    { id: 'habits', label: 'Hábitos', icon: Target },
-    { id: 'quicknotes', label: 'Anotações Rápidas', icon: StickyNote },
-    { id: 'notebook', label: 'Caderno de Anotações', icon: BookOpen },
-    { id: 'secondbrain', label: 'Segundo Cérebro', icon: Brain },
-    { id: 'soundscapes', label: 'Paisagens Sonoras', icon: Headphones },
-    { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
-    { id: 'eisenhower', label: 'Matriz de Eisenhower', icon: LayoutGrid },
-    { id: 'lifewheel', label: 'Roda da Vida', icon: Heart },
-    { id: 'ikigai', label: 'Ikigai', icon: Lightbulb },
+    { id: 'gamification', label: 'Conquistas', icon: Trophy },
+    { id: 'soundscapes', label: 'Foco Sonoro', icon: Headphones },
+    { id: 'books', label: 'Livros', icon: BookMarked },
+    { id: 'travel', label: 'Viagens', icon: Plane },
+    { id: 'movies', label: 'Entretenimento', icon: Film },
   ];
 
-  const renderNavItem = (item: { id: string; label: string; icon: React.ElementType; badge?: string }, isActive: boolean) => {
-    const content = (
+  const renderNavItem = (
+    item: { id: string; label: string; icon: React.ElementType; badge?: string },
+    isActive: boolean,
+    isMainItem = false
+  ) => {
+    const IconComponent = item.icon;
+    
+    const buttonContent = (
       <Button
         key={item.id}
         variant="ghost"
         className={cn(
-          'w-full h-9 px-3 font-normal text-sm',
-          isCollapsed ? 'justify-center' : 'justify-start text-left',
+          'w-full relative group transition-all duration-300',
+          isCollapsed ? 'h-11 w-11 p-0 justify-center mx-auto' : 'h-10 px-3 justify-start',
           isActive 
-            ? 'bg-primary/10 text-foreground' 
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            ? 'bg-accent/15 text-accent border-accent/20 border' 
+            : 'text-muted-foreground hover:text-foreground hover:bg-white/5',
+          isMainItem && 'font-medium'
         )}
         onClick={() => onSectionChange(item.id)}
       >
-        <item.icon className={cn("h-4 w-4 shrink-0", !isCollapsed && "mr-3")} />
+        {/* Active indicator glow */}
+        {isActive && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-accent rounded-full shadow-[0_0_8px_var(--accent)]" />
+        )}
+        
+        <IconComponent className={cn(
+          "h-[18px] w-[18px] shrink-0 transition-all duration-300",
+          !isCollapsed && "mr-3",
+          isActive && "text-accent"
+        )} />
+        
         {!isCollapsed && (
           <>
-            <span className="truncate flex-1">{item.label}</span>
+            <span className="truncate flex-1 text-left text-[13px]">{item.label}</span>
             {item.badge && (
-              <Badge variant="secondary" className="ml-auto text-xs h-5 min-w-5 px-1.5 bg-muted text-muted-foreground">
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "ml-auto text-[10px] h-5 min-w-5 px-1.5 font-medium",
+                  isActive 
+                    ? "bg-accent/20 text-accent" 
+                    : "bg-muted/50 text-muted-foreground"
+                )}
+              >
                 {item.badge}
               </Badge>
             )}
@@ -128,138 +160,120 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
         <TooltipProvider key={item.id} delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              {content}
+              {buttonContent}
             </TooltipTrigger>
-            <TooltipContent side="right" className="flex items-center gap-2">
+            <TooltipContent 
+              side="right" 
+              className="glass-effect border-border/50 flex items-center gap-2"
+            >
               {item.label}
-              {item.badge && <Badge variant="secondary" className="text-xs">{item.badge}</Badge>}
+              {item.badge && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{item.badge}</Badge>
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       );
     }
 
-    return content;
+    return buttonContent;
   };
 
   const renderSection = (
     title: string, 
     sectionId: string, 
-    items: typeof personalItems,
+    items: typeof productivityItems,
     icon: React.ElementType
   ) => {
-    const Icon = icon;
+    const IconComponent = icon;
     const isExpanded = expandedSections.includes(sectionId) && !isCollapsed;
     
     if (isCollapsed) {
       return (
-        <div className="space-y-1 py-2">
+        <div key={sectionId} className="flex flex-col items-center gap-1 py-2">
           {items.map((item) => renderNavItem(item, activeSection === item.id))}
         </div>
       );
     }
 
     return (
-      <div className="space-y-1">
+      <div key={sectionId} className="space-y-1">
         <button
           onClick={() => toggleSection(sectionId)}
-          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-widest hover:text-muted-foreground transition-colors"
         >
-          <Icon className="h-3.5 w-3.5" />
+          <IconComponent className="h-3 w-3" />
           <span className="flex-1 text-left">{title}</span>
-          {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronRight className="h-3.5 w-3.5" />
-          )}
+          <ChevronDown className={cn(
+            "h-3 w-3 transition-transform duration-200",
+            !isExpanded && "-rotate-90"
+          )} />
         </button>
-        {isExpanded && (
-          <div className="space-y-0.5 pl-2">
-            {items.map((item) => renderNavItem(item, activeSection === item.id))}
-          </div>
-        )}
+        
+        <div className={cn(
+          "space-y-0.5 overflow-hidden transition-all duration-300",
+          isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        )}>
+          {items.map((item) => renderNavItem(item, activeSection === item.id))}
+        </div>
       </div>
     );
   };
 
   return (
     <div className={cn(
-      "flex flex-col h-full bg-background border-r border-border transition-all duration-300",
-      isCollapsed ? "w-16" : "w-full"
+      "flex flex-col h-full bg-background border-r border-border/50 transition-all duration-300 ease-out",
+      isCollapsed ? "w-[68px]" : "w-[260px]"
     )}>
-      {/* Header */}
-      <div className={cn("border-b border-border", isCollapsed ? "p-3" : "p-5")}>
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
-          <div className={cn(
-            "rounded-lg bg-foreground flex items-center justify-center shrink-0",
-            isCollapsed ? "w-8 h-8" : "w-9 h-9"
-          )}>
-            <Zap className={cn("text-background", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <h2 className="font-semibold text-base tracking-tight truncate">
-                Alta Per4mance
-              </h2>
-              <p className="text-xs text-muted-foreground truncate">Sistema de Produtividade</p>
-            </div>
-          )}
+      {/* Header with Logo */}
+      <div className={cn(
+        "flex items-center border-b border-border/30 transition-all duration-300",
+        isCollapsed ? "p-3 justify-center" : "p-4 gap-3"
+      )}>
+        <div className={cn(
+          "rounded-xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shrink-0 transition-all duration-300 shadow-lg",
+          isCollapsed ? "w-10 h-10" : "w-10 h-10"
+        )}>
+          <Zap className="h-5 w-5 text-background" />
         </div>
+        
+        {!isCollapsed && (
+          <div className="min-w-0 flex-1 animate-fade-in">
+            <h2 className="font-semibold text-[15px] tracking-tight flex items-center gap-1">
+              Alta Per4mance 
+              <span className="text-accent text-xs">⬏</span>
+            </h2>
+            <p className="text-[11px] text-muted-foreground">Sistema de Produtividade</p>
+          </div>
+        )}
       </div>
 
-      {/* Toggle Button */}
+      {/* Collapse Toggle */}
       {onToggleCollapse && (
-        <div className={cn("p-2", isCollapsed ? "flex justify-center" : "flex justify-end")}>
+        <div className={cn(
+          "flex py-2 px-2",
+          isCollapsed ? "justify-center" : "justify-end"
+        )}>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-white/5"
             onClick={onToggleCollapse}
           >
-            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         </div>
       )}
 
-      {/* Dashboard & AI Links */}
-      <div className={cn("space-y-1", isCollapsed ? "p-2" : "p-3")}>
-        {isCollapsed ? (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    'w-full justify-center h-10',
-                    activeSection === 'dashboard' 
-                      ? 'bg-primary/10 text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  )}
-                  onClick={() => onSectionChange('dashboard')}
-                >
-                  <Home className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Dashboard</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <Button
-            variant="ghost"
-            className={cn(
-              'w-full justify-start h-10 px-3 text-left font-medium',
-              activeSection === 'dashboard' 
-                ? 'bg-primary/10 text-foreground' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            )}
-            onClick={() => onSectionChange('dashboard')}
-          >
-            <Home className="h-4 w-4 mr-3" />
-            Dashboard
-          </Button>
-        )}
+      {/* Main Navigation Items */}
+      <div className={cn("space-y-1", isCollapsed ? "px-2 py-2" : "px-3 py-2")}>
+        {mainItems.map((item) => renderNavItem(item, activeSection === item.id, true))}
         
-        {/* Per4mance AI - Highlighted */}
+        {/* Parceiro de Responsabilidade - Highlighted */}
         {isCollapsed ? (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
@@ -267,22 +281,19 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
                 <Button
                   variant="ghost"
                   className={cn(
-                    'w-full justify-center h-10 relative overflow-hidden group',
+                    'w-11 h-11 p-0 justify-center mx-auto relative overflow-hidden group transition-all duration-300',
                     activeSection === 'ai' 
-                      ? 'bg-accent/20 text-accent border border-accent/30' 
+                      ? 'bg-accent/20 text-accent border border-accent/40 shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)]' 
                       : 'text-muted-foreground hover:text-accent hover:bg-accent/10 border border-transparent'
                   )}
                   onClick={() => onSectionChange('ai')}
                 >
-                  <Sparkles className={cn(
-                    "h-4 w-4 transition-all",
-                    activeSection === 'ai' ? 'text-accent' : 'group-hover:text-accent'
-                  )} />
+                  <Sparkles className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="flex items-center gap-2">
-                Per4mance AI
-                <Badge className="text-[10px] px-1.5 h-5 bg-accent text-accent-foreground">IA</Badge>
+              <TooltipContent side="right" className="glass-effect border-border/50 flex items-center gap-2">
+                Parceiro de Responsabilidade
+                <Badge className="text-[10px] px-1.5 h-4 bg-accent text-accent-foreground">IA</Badge>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -290,23 +301,27 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
           <Button
             variant="ghost"
             className={cn(
-              'w-full justify-start h-10 px-3 text-left font-medium relative overflow-hidden group',
+              'w-full h-10 px-3 justify-start relative overflow-hidden group transition-all duration-300',
               activeSection === 'ai' 
-                ? 'bg-accent/20 text-accent border border-accent/30' 
+                ? 'bg-gradient-to-r from-accent/20 to-accent/10 text-accent border border-accent/40 shadow-[0_0_20px_rgba(var(--accent-rgb),0.15)]' 
                 : 'text-muted-foreground hover:text-accent hover:bg-accent/10 border border-transparent'
             )}
             onClick={() => onSectionChange('ai')}
           >
+            {activeSection === 'ai' && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-accent rounded-full shadow-[0_0_8px_var(--accent)]" />
+            )}
             <Sparkles className={cn(
-              "h-4 w-4 mr-3 transition-all",
-              activeSection === 'ai' ? 'text-accent' : 'group-hover:text-accent'
+              "h-[18px] w-[18px] mr-3 transition-all duration-300",
+              activeSection === 'ai' && "animate-pulse"
             )} />
-            <span className="flex-1">Per4mance AI</span>
+            <span className="flex-1 text-left text-[13px] font-medium">Parceiro IA</span>
             <Badge 
-              variant="secondary" 
               className={cn(
-                "text-[10px] px-1.5 h-5",
-                activeSection === 'ai' ? 'bg-accent text-accent-foreground' : 'bg-accent/20 text-accent'
+                "text-[10px] px-1.5 h-5 transition-all duration-300",
+                activeSection === 'ai' 
+                  ? 'bg-accent text-accent-foreground' 
+                  : 'bg-accent/20 text-accent'
               )}
             >
               IA
@@ -315,38 +330,63 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed = false, onToggle
         )}
       </div>
 
-      <Separator className="mx-3" />
+      {/* Divider */}
+      <div className="mx-3 my-2 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
 
-      {/* Main Navigation */}
-      <div className={cn("flex-1 overflow-y-auto space-y-4", isCollapsed ? "p-2" : "p-3")}>
-        {renderSection('Área Pessoal', 'personal', personalItems, User)}
-        {!isCollapsed && <Separator className="mx-0" />}
-        {renderSection('Área Profissional', 'professional', professionalItems, BarChart3)}
-        {!isCollapsed && <Separator className="mx-0" />}
-        {renderSection('Ferramentas', 'tools', toolsItems, Sparkles)}
-      </div>
+      {/* Scrollable Navigation Sections */}
+      <ScrollArea className="flex-1 px-3">
+        <div className="space-y-4 py-2">
+          {renderSection('Produtividade', 'productivity', productivityItems, CheckSquare)}
+          {renderSection('Saúde & Fitness', 'health', healthItems, Heart)}
+          {renderSection('Desenvolvimento', 'development', developmentItems, Brain)}
+          {renderSection('Finanças', 'finance', financeItems, DollarSign)}
+          {renderSection('Ferramentas', 'tools', toolsItems, Sparkles)}
+        </div>
+      </ScrollArea>
 
-      <Separator className="mx-3" />
+      {/* Divider */}
+      <div className="mx-3 my-2 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
 
       {/* Bottom Navigation */}
-      <div className={cn("space-y-0.5", isCollapsed ? "p-2" : "p-3")}>
+      <div className={cn("space-y-1 pb-2", isCollapsed ? "px-2" : "px-3")}>
         {renderNavItem({ id: 'settings', label: 'Configurações', icon: Settings }, activeSection === 'settings')}
         {renderNavItem({ id: 'help', label: 'Ajuda', icon: HelpCircle }, activeSection === 'help')}
       </div>
 
-      {/* User Profile */}
-      <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
-          <div className={cn(
-            "rounded-full bg-muted flex items-center justify-center",
-            isCollapsed ? "w-8 h-8" : "w-8 h-8"
-          )}>
-            <span className="text-xs font-medium text-muted-foreground">U</span>
+      {/* User Profile & Stats */}
+      <div className={cn(
+        "border-t border-border/30 transition-all duration-300",
+        isCollapsed ? "p-2" : "p-3"
+      )}>
+        <div className={cn(
+          "flex items-center gap-3 p-2 rounded-xl bg-gradient-to-r from-muted/30 to-transparent transition-all duration-300",
+          isCollapsed && "justify-center p-2"
+        )}>
+          {/* Avatar with level indicator */}
+          <div className="relative shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center border border-accent/20">
+              <span className="text-xs font-semibold text-accent">U</span>
+            </div>
+            {/* Level badge */}
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-accent text-[10px] font-bold text-accent-foreground flex items-center justify-center border-2 border-background">
+              {stats.level}
+            </div>
           </div>
+          
           {!isCollapsed && (
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 animate-fade-in">
               <p className="text-sm font-medium truncate">Usuário</p>
-              <p className="text-xs text-muted-foreground truncate">Plano Gratuito</p>
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Flame className="h-3 w-3 text-warning" />
+                  <span>{stats.streak} dias</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Zap className="h-3 w-3 text-accent" />
+                  <span>{stats.xp} XP</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
