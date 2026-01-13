@@ -4,16 +4,14 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useGamification } from '@/hooks/useGamification';
+import StatsChart from './StatsChart';
+import WeeklyMissions from './WeeklyMissions';
 import { 
   Flame, 
   Zap, 
   Trophy, 
-  Star, 
-  Target,
   Award,
-  Crown,
   Sparkles,
-  TrendingUp,
   Medal
 } from 'lucide-react';
 
@@ -202,42 +200,11 @@ const GamificationPanel = () => {
         </div>
       </Card>
 
-      {/* Missions/Challenges */}
-      <Card className="p-6 bg-card border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Target className="h-5 w-5 text-success" />
-          <h3 className="font-semibold">Missões Semanais</h3>
-        </div>
+      {/* Weekly Missions */}
+      <WeeklyMissions />
 
-        <div className="space-y-3">
-          <div className="p-3 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Completar 20 tarefas</span>
-              <Badge variant="outline" className="text-xs">+300 XP</Badge>
-            </div>
-            <Progress value={35} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-1">7/20 tarefas</p>
-          </div>
-
-          <div className="p-3 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Manter streak por 7 dias</span>
-              <Badge variant="outline" className="text-xs">+200 XP</Badge>
-            </div>
-            <Progress value={(stats.streak / 7) * 100} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-1">{stats.streak}/7 dias</p>
-          </div>
-
-          <div className="p-3 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Completar hábitos 6 dias</span>
-              <Badge variant="outline" className="text-xs">+150 XP</Badge>
-            </div>
-            <Progress value={50} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-1">3/6 dias perfeitos</p>
-          </div>
-        </div>
-      </Card>
+      {/* Stats Chart */}
+      <StatsChart />
 
       {/* Tips */}
       <Card className="p-4 bg-accent/5 border-accent/20">
@@ -246,7 +213,7 @@ const GamificationPanel = () => {
           <div>
             <p className="text-sm font-medium">Dica do Coach IA</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Complete todos os hábitos do dia para ganhar 50 XP de bônus! Você está a {7 - stats.streak} dias de desbloquear o badge "Incandescente".
+              Complete todos os hábitos do dia para ganhar 50 XP de bônus! Você está a {Math.max(0, 7 - stats.streak)} dias de desbloquear o badge "Incandescente".
             </p>
           </div>
         </div>
