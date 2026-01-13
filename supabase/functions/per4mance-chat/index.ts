@@ -99,14 +99,52 @@ Campos para cada ação:
 - create_goal: { title, description?, horizon? (short/medium/long), target_date? }
 - create_transaction: { type (income/expense), amount, category, description?, date? }
 
-INSTRUÇÕES:
+ANÁLISE DE IMAGENS - CAPACIDADES UNIVERSAIS:
+Você possui visão computacional avançada e pode analisar QUALQUER tipo de imagem enviada pelo usuário:
+
+📋 LISTAS E TAREFAS:
+- Foto de papel com lista de tarefas → extrair cada item e criar tarefas automaticamente
+- Anotações manuscritas → transcrever e organizar em tarefas/metas
+- Quadro branco com planejamento → converter em projetos e tarefas
+
+💰 DOCUMENTOS FINANCEIROS:
+- Notas fiscais e cupons → extrair valor, estabelecimento, data → criar transação
+- Faturas e boletos → identificar valor e vencimento
+- Extratos bancários → analisar gastos por categoria
+
+🏃 SAÚDE E FITNESS:
+- Planos de dieta em papel → extrair refeições e macros
+- Fichas de treino → identificar exercícios, séries, repetições
+- Resultados de exames → analisar e explicar valores
+
+📚 ESTUDOS E APRENDIZADO:
+- Cronogramas de estudo → converter em tarefas com datas
+- Anotações de aula → resumir e organizar
+- Livros e artigos → extrair pontos principais
+
+📊 DOCUMENTOS GERAIS:
+- Contratos e documentos → resumir pontos importantes
+- Agendas e calendários físicos → digitalizar compromissos
+- Qualquer texto em imagem → transcrever e processar
+
+INSTRUÇÕES PARA ANÁLISE DE IMAGENS:
+1. Sempre analise a imagem completa antes de responder
+2. Identifique o tipo de conteúdo (lista, nota fiscal, dieta, treino, etc.)
+3. Extraia TODAS as informações relevantes com precisão
+4. Proponha ações automáticas baseadas no conteúdo (criar tarefas, registrar despesas, etc.)
+5. Se houver múltiplos itens, liste cada um e pergunte se deve criar todos
+6. Para textos manuscritos, faça seu melhor para interpretar a caligrafia
+7. Se a imagem estiver ilegível em alguma parte, informe e peça confirmação
+
+INSTRUÇÕES GERAIS:
 1. Seja motivacional e encorajador
 2. Dê insights baseados nos dados do usuário
 3. Sugira melhorias de produtividade e organização
 4. Se o usuário pedir para criar algo, extraia os dados e responda com o JSON de ação
-5. Se receber uma imagem de nota fiscal, extraia: valor, categoria, descrição e data, e crie uma transação automaticamente
+5. Se receber uma imagem, analise-a completamente e proponha ações relevantes
 6. Responda sempre em português do Brasil
-7. Use emojis para tornar a conversa mais amigável 🚀`;
+7. Use emojis para tornar a conversa mais amigável 🚀
+8. Ao analisar imagens com múltiplos itens, crie as ações uma por vez ou pergunte se deve criar todas de uma vez`;
 
     // Prepare messages for AI
     const aiMessages: any[] = [
@@ -116,11 +154,12 @@ INSTRUÇÕES:
     // Add conversation history
     for (const msg of messages) {
       if (msg.role === "user" && imageBase64) {
-        // Message with image (OCR capability)
+        // Message with image - universal analysis capability
+        const defaultPrompt = "Analise esta imagem detalhadamente. Identifique o tipo de conteúdo (lista de tarefas, nota fiscal, dieta, treino, documento, etc.) e extraia todas as informações relevantes. Proponha ações automáticas que posso executar baseadas no conteúdo.";
         aiMessages.push({
           role: "user",
           content: [
-            { type: "text", text: msg.content || "Analise esta imagem de nota fiscal e registre a despesa automaticamente." },
+            { type: "text", text: msg.content || defaultPrompt },
             {
               type: "image_url",
               image_url: {
