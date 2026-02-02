@@ -20,6 +20,8 @@ import WorkoutManager from '../Health/WorkoutManager';
 import BodyMeasurementsManager from '../Health/BodyMeasurementsManager';
 import { NutritionManager } from '../Health/NutritionManager';
 import ThemeSettings from '../Settings/ThemeSettings';
+import IntegratedCalendar from '../Calendar/IntegratedCalendar';
+import { AccountabilityButton } from '../Accountability/AccountabilityPartner';
 import { useAppStore } from '@/lib/store';
 import { useAuth } from '@/hooks/useAuth';
 import { getThemeById } from '@/lib/themes';
@@ -95,6 +97,11 @@ const MainLayout = () => {
       case 'measurements': return <BodyMeasurementsManager />;
       case 'diet': return <NutritionManager />;
       case 'settings': return <ThemeSettings />;
+      case 'calendar': return (
+        <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
+          <IntegratedCalendar />
+        </div>
+      );
       default:
         return (
           <div className="p-6 flex items-center justify-center min-h-[50vh]">
@@ -208,6 +215,9 @@ const MainLayout = () => {
           {renderContent()}
         </main>
       </div>
+
+      {/* Floating Accountability Button */}
+      <AccountabilityButton onClick={() => setActiveSection('ai')} />
 
       {/* Auth Modal */}
       <AuthModal 
