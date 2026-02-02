@@ -15,7 +15,10 @@ import {
   Lightbulb,
   Heart,
   Zap,
-  MessageSquare
+  MessageSquare,
+  CheckSquare,
+  DollarSign,
+  Dumbbell
 } from 'lucide-react';
 import { useGamification } from '@/hooks/useGamification';
 import { useTasks } from '@/hooks/useTasks';
@@ -325,8 +328,5 @@ export const ModuleInsight: React.FC<{
     </div>
   );
 };
-
-// Missing imports for icon
-import { CheckSquare, DollarSign, Dumbbell } from 'lucide-react';
 
 export default InsightCard;

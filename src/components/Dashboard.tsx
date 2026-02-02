@@ -14,7 +14,7 @@ import { useGoals } from '@/hooks/useGoals';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamification } from '@/hooks/useGamification';
-import { FloatingInsight, AccountabilityButton } from '@/components/Accountability/AccountabilityPartner';
+import { FloatingInsight } from '@/components/Accountability/AccountabilityPartner';
 import { 
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell
@@ -668,9 +668,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
           </motion.div>
         </div>
       </ScrollArea>
-
-      {/* Floating AI Button */}
-      <AccountabilityButton onClick={() => onNavigateToSection?.('ai')} />
     </div>
   );
 };
