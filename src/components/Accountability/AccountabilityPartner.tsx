@@ -276,7 +276,8 @@ export const AccountabilityButton: React.FC<{
 export const ModuleInsight: React.FC<{
   module: 'tasks' | 'habits' | 'goals' | 'finance' | 'workout';
   data?: Record<string, unknown>;
-}> = ({ module, data }) => {
+  customMessage?: string;
+}> = ({ module, data, customMessage }) => {
   const getModuleInsight = () => {
     switch (module) {
       case 'tasks':
@@ -312,20 +313,24 @@ export const ModuleInsight: React.FC<{
   const insight = getModuleInsight();
   if (!insight) return null;
 
-  const IconComponent = insight.icon;
+  const displayMessage = customMessage || insight.message;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-accent/10 to-transparent border border-accent/20">
-      <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-        <Sparkles className="h-4 w-4 text-accent" />
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 backdrop-blur-sm"
+    >
+      <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center shrink-0">
+        <Sparkles className="h-5 w-5 text-accent" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-muted-foreground italic">
-          "{insight.message}"
+        <p className="text-sm text-foreground/90 leading-relaxed">
+          "{displayMessage}"
         </p>
-        <p className="text-[11px] text-muted-foreground/60 mt-1">— Parceiro de Responsabilidade</p>
+        <p className="text-[11px] text-muted-foreground mt-1">— Parceiro de Responsabilidade</p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
