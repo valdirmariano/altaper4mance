@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -8,16 +9,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ModuleInsight } from '@/components/Accountability/AccountabilityPartner';
 import { 
   Target, 
   Plus, 
   MoreHorizontal,
   Calendar,
-  ChevronRight,
   Flag,
   TrendingUp,
   Trash2,
-  Edit2
+  Trophy,
+  Rocket,
+  Sparkles,
+  ChevronUp
 } from 'lucide-react';
 import { useGoals } from '@/hooks/useGoals';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -41,7 +45,22 @@ const GoalsManager = () => {
     long: 'Longo Prazo'
   };
 
+  const horizonColors: Record<string, string> = {
+    short: 'bg-green-500/20 text-green-400 border-green-500/30',
+    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    long: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+  };
+
   const pillars = ['Saúde', 'Carreira', 'Finanças', 'Desenvolvimento', 'Relacionamentos', 'Lazer'];
+
+  const pillarIcons: Record<string, React.ReactNode> = {
+    'Saúde': '❤️',
+    'Carreira': '💼',
+    'Finanças': '💰',
+    'Desenvolvimento': '🚀',
+    'Relacionamentos': '👥',
+    'Lazer': '🎮'
+  };
 
   const handleAddGoal = async () => {
     if (!newGoal.title.trim()) return;
@@ -82,57 +101,95 @@ const GoalsManager = () => {
     ? Math.round(goals.reduce((acc, g) => acc + (g.progress ?? 0), 0) / goals.length)
     : 0;
 
+  // Motivation insight
+  const getMotivationInsight = () => {
+    if (completedGoals.length > 0 && completedGoals.length === goals.length) {
+      return "Todas as metas alcançadas! Hora de sonhar mais alto! 🚀";
+    }
+    if (avgProgress >= 70) {
+      return `Progresso médio de ${avgProgress}%! Você está na reta final.`;
+    }
+    if (goals.length === 0) {
+      return "Defina suas metas. Quem não sabe onde quer chegar, nunca vai chegar!";
+    }
+    const nearestGoal = goals.filter(g => (g.progress ?? 0) < 100).sort((a, b) => (b.progress ?? 0) - (a.progress ?? 0))[0];
+    if (nearestGoal && (nearestGoal.progress ?? 0) >= 80) {
+      return `"${nearestGoal.title}" está quase lá! Só faltam ${100 - (nearestGoal.progress ?? 0)}%.`;
+    }
+    return "Grandes jornadas começam com um único passo. Continue avançando!";
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Carregando metas...</p>
+        <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Metas</h1>
-          <p className="text-muted-foreground text-sm">
-            Defina e acompanhe seus objetivos
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10 backdrop-blur-sm">
+              <Target className="h-7 w-7 text-accent" />
+            </div>
+            Metas
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Defina e acompanhe seus objetivos de vida
           </p>
-        </div>
+        </motion.div>
+
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Plus className="h-4 w-4" />
               Nova Meta
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="glass-card border-border/50">
             <DialogHeader>
-              <DialogTitle>Nova Meta</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Rocket className="h-5 w-5 text-accent" />
+                Nova Meta
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <Input
                 placeholder="Título da meta"
                 value={newGoal.title}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, title: e.target.value }))}
+                className="bg-background/50"
               />
               <Textarea
                 placeholder="Descrição (opcional)"
                 value={newGoal.description}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, description: e.target.value }))}
+                className="bg-background/50"
               />
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   value={newGoal.pillar}
                   onValueChange={(value) => setNewGoal(prev => ({ ...prev, pillar: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background/50">
                     <SelectValue placeholder="Pilar" />
                   </SelectTrigger>
                   <SelectContent>
                     {pillars.map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                      <SelectItem key={p} value={p}>
+                        {pillarIcons[p]} {p}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -140,13 +197,13 @@ const GoalsManager = () => {
                   value={newGoal.horizon}
                   onValueChange={(value) => setNewGoal(prev => ({ ...prev, horizon: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background/50">
                     <SelectValue placeholder="Horizonte" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="short">Curto Prazo</SelectItem>
-                    <SelectItem value="medium">Médio Prazo</SelectItem>
-                    <SelectItem value="long">Longo Prazo</SelectItem>
+                    <SelectItem value="short">🎯 Curto Prazo</SelectItem>
+                    <SelectItem value="medium">📅 Médio Prazo</SelectItem>
+                    <SelectItem value="long">🚀 Longo Prazo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -154,8 +211,10 @@ const GoalsManager = () => {
                 type="date"
                 value={newGoal.target_date}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, target_date: e.target.value }))}
+                className="bg-background/50"
               />
-              <Button onClick={handleAddGoal} className="w-full">
+              <Button onClick={handleAddGoal} className="w-full bg-accent hover:bg-accent/90">
+                <Sparkles className="h-4 w-4 mr-2" />
                 Criar Meta
               </Button>
             </div>
@@ -163,127 +222,185 @@ const GoalsManager = () => {
         </Dialog>
       </div>
 
+      {/* Accountability Partner Insight */}
+      <ModuleInsight 
+        module="goals" 
+        customMessage={getMotivationInsight()}
+      />
+
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Total de Metas</p>
-              <p className="text-2xl font-semibold">{goals.length}</p>
-            </div>
-            <Target className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Em Progresso</p>
-              <p className="text-2xl font-semibold">{inProgressGoals.length}</p>
-            </div>
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Progresso Médio</p>
-              <p className="text-2xl font-semibold">{avgProgress}%</p>
-            </div>
-            <Flag className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Concluídas</p>
-              <p className="text-2xl font-semibold">{completedGoals.length}</p>
-            </div>
-            <Target className="h-5 w-5 text-green-500" />
-          </div>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { icon: Target, label: 'Total de Metas', value: goals.length, color: 'foreground' },
+          { icon: TrendingUp, label: 'Em Progresso', value: inProgressGoals.length, color: 'amber' },
+          { icon: Flag, label: 'Progresso Médio', value: `${avgProgress}%`, color: 'accent' },
+          { icon: Trophy, label: 'Concluídas', value: completedGoals.length, color: 'green' },
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + index * 0.05 }}
+          >
+            <Card className="glass-card p-5 hover-lift">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                  <p className={`text-3xl font-bold mt-1 ${
+                    stat.color === 'green' ? 'text-green-400' : 
+                    stat.color === 'amber' ? 'text-amber-400' : 
+                    stat.color === 'accent' ? 'text-accent' : ''
+                  }`}>
+                    {stat.value}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${
+                  stat.color === 'green' ? 'bg-green-500/10' : 
+                  stat.color === 'amber' ? 'bg-amber-500/10' : 
+                  stat.color === 'accent' ? 'bg-accent/10' : 
+                  'bg-foreground/5'
+                }`}>
+                  <stat.icon className={`h-6 w-6 ${
+                    stat.color === 'green' ? 'text-green-400' : 
+                    stat.color === 'amber' ? 'text-amber-400' : 
+                    stat.color === 'accent' ? 'text-accent' : 
+                    'text-foreground/70'
+                  }`} />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Goals by Horizon */}
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="all">Todas</TabsTrigger>
-          <TabsTrigger value="short">Curto Prazo</TabsTrigger>
-          <TabsTrigger value="medium">Médio Prazo</TabsTrigger>
-          <TabsTrigger value="long">Longo Prazo</TabsTrigger>
+        <TabsList className="bg-muted/30 border border-border/50 p-1">
+          <TabsTrigger value="all" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+            Todas
+          </TabsTrigger>
+          <TabsTrigger value="short" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+            Curto Prazo
+          </TabsTrigger>
+          <TabsTrigger value="medium" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+            Médio Prazo
+          </TabsTrigger>
+          <TabsTrigger value="long" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+            Longo Prazo
+          </TabsTrigger>
         </TabsList>
 
         {['all', 'short', 'medium', 'long'].map((tab) => (
-          <TabsContent key={tab} value={tab} className="mt-4">
+          <TabsContent key={tab} value={tab} className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {goals
-                .filter(g => tab === 'all' || g.horizon === tab)
-                .map((goal) => (
-                  <Card key={goal.id} className="p-5 bg-card border-border hover:border-muted-foreground/30 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {goal.pillar && (
-                            <Badge variant="outline" className="text-xs">
-                              {goal.pillar}
-                            </Badge>
-                          )}
-                          {goal.horizon && (
-                            <Badge variant="secondary" className="text-xs bg-muted">
-                              {horizonLabels[goal.horizon] || goal.horizon}
-                            </Badge>
-                          )}
-                        </div>
-                        <h3 className="font-medium">{goal.title}</h3>
-                        {goal.description && (
-                          <p className="text-sm text-muted-foreground">{goal.description}</p>
-                        )}
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleUpdateProgress(goal.id, (goal.progress ?? 0) + 10)}>
-                            <TrendingUp className="h-4 w-4 mr-2" />
-                            +10% Progresso
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => deleteGoal(goal.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Progresso</span>
-                          <span className="font-medium">{goal.progress ?? 0}%</span>
-                        </div>
-                        <Progress value={goal.progress ?? 0} className="h-2" />
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        {goal.target_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(goal.target_date).toLocaleDateString('pt-BR')}
+              <AnimatePresence mode="popLayout">
+                {goals
+                  .filter(g => tab === 'all' || g.horizon === tab)
+                  .map((goal, index) => (
+                    <motion.div
+                      key={goal.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: index * 0.05 }}
+                      layout
+                    >
+                      <Card className="glass-card p-5 hover-lift group">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 pr-4">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              {goal.pillar && (
+                                <Badge variant="outline" className="text-xs gap-1">
+                                  {pillarIcons[goal.pillar]} {goal.pillar}
+                                </Badge>
+                              )}
+                              {goal.horizon && (
+                                <Badge className={`text-xs border ${horizonColors[goal.horizon] || 'bg-muted'}`}>
+                                  {horizonLabels[goal.horizon] || goal.horizon}
+                                </Badge>
+                              )}
+                            </div>
+                            <h3 className="font-semibold text-lg">{goal.title}</h3>
+                            {goal.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {goal.description}
+                              </p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="glass-card border-border/50">
+                              <DropdownMenuItem onClick={() => handleUpdateProgress(goal.id, (goal.progress ?? 0) + 10)}>
+                                <ChevronUp className="h-4 w-4 mr-2" />
+                                +10% Progresso
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => deleteGoal(goal.id)}
+                                className="text-red-400 focus:text-red-400"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between text-sm mb-2">
+                              <span className="text-muted-foreground">Progresso</span>
+                              <span className={`font-bold ${
+                                (goal.progress ?? 0) === 100 ? 'text-green-400' : 
+                                (goal.progress ?? 0) >= 70 ? 'text-amber-400' : 
+                                'text-foreground'
+                              }`}>
+                                {goal.progress ?? 0}%
+                              </span>
+                            </div>
+                            <div className="h-3 rounded-full bg-muted/50 overflow-hidden">
+                              <motion.div 
+                                className={`h-full rounded-full ${
+                                  (goal.progress ?? 0) === 100 ? 'bg-gradient-to-r from-green-500 to-green-400' : 
+                                  'bg-gradient-to-r from-accent to-accent/70'
+                                }`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${goal.progress ?? 0}%` }}
+                                transition={{ duration: 0.8 }}
+                              />
+                            </div>
+                          </div>
+
+                          {goal.target_date && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>Meta: {new Date(goal.target_date).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+              </AnimatePresence>
               {goals.filter(g => tab === 'all' || g.horizon === tab).length === 0 && (
-                <p className="text-muted-foreground text-sm col-span-2 text-center py-8">
-                  Nenhuma meta encontrada
-                </p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-2"
+                >
+                  <Card className="glass-card p-12 text-center">
+                    <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-4">
+                      <Target className="h-10 w-10 text-accent" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">Nenhuma meta encontrada</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Crie sua primeira meta e comece a acompanhar seu progresso!
+                    </p>
+                  </Card>
+                </motion.div>
               )}
             </div>
           </TabsContent>
@@ -291,29 +408,50 @@ const GoalsManager = () => {
       </Tabs>
 
       {/* Life Pillars Overview */}
-      <Card className="p-5 bg-card border-border">
-        <h3 className="font-medium mb-4">Pilares da Vida</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {pillars.map((pillar) => {
-            const pillarGoals = goals.filter(g => g.pillar === pillar);
-            const pillarAvgProgress = pillarGoals.length > 0
-              ? Math.round(pillarGoals.reduce((acc, g) => acc + (g.progress ?? 0), 0) / pillarGoals.length)
-              : 0;
-            
-            return (
-              <div 
-                key={pillar}
-                className="p-4 rounded-lg border border-border text-center hover:border-muted-foreground/30 transition-colors cursor-pointer"
-              >
-                <p className="text-xs text-muted-foreground mb-1">{pillar}</p>
-                <p className="text-xl font-semibold">{pillarAvgProgress}%</p>
-                <p className="text-xs text-muted-foreground">{pillarGoals.length} metas</p>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-    </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="glass-card p-6">
+          <h3 className="font-semibold text-lg mb-5 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-accent" />
+            Pilares da Vida
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {pillars.map((pillar, index) => {
+              const pillarGoals = goals.filter(g => g.pillar === pillar);
+              const pillarAvgProgress = pillarGoals.length > 0
+                ? Math.round(pillarGoals.reduce((acc, g) => acc + (g.progress ?? 0), 0) / pillarGoals.length)
+                : 0;
+              
+              return (
+                <motion.div 
+                  key={pillar}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
+                  className="p-5 rounded-xl bg-muted/30 border border-border/50 text-center hover:border-accent/30 transition-all cursor-pointer group"
+                >
+                  <div className="text-2xl mb-2">{pillarIcons[pillar]}</div>
+                  <p className="text-xs text-muted-foreground mb-1">{pillar}</p>
+                  <p className={`text-2xl font-bold ${
+                    pillarAvgProgress >= 70 ? 'text-green-400' : 
+                    pillarAvgProgress >= 40 ? 'text-amber-400' : 
+                    'text-foreground'
+                  }`}>
+                    {pillarAvgProgress}%
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {pillarGoals.length} {pillarGoals.length === 1 ? 'meta' : 'metas'}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 };
 
