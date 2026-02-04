@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Utensils, Target, Flame, Beef, Wheat, Droplets, Trash2, Settings } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ModuleInsight } from '@/components/Accountability/AccountabilityPartner';
+import { Plus, Utensils, Target, Flame, Beef, Wheat, Droplets, Trash2, Settings, Apple } from 'lucide-react';
 import { useNutrition, Meal } from '@/hooks/useNutrition';
 import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
@@ -69,11 +72,8 @@ export const NutritionManager = () => {
     setIsEditingGoals(false);
   };
 
-  const getProgressColor = (current: number, goal: number) => {
-    const percentage = (current / goal) * 100;
-    if (percentage >= 100) return 'bg-green-500';
-    if (percentage >= 75) return 'bg-yellow-500';
-    return 'bg-primary';
+  const getProgressPercentage = (current: number, goal: number) => {
+    return Math.min((current / goal) * 100, 100);
   };
 
   const groupMealsByDate = () => {
@@ -87,36 +87,55 @@ export const NutritionManager = () => {
     return grouped;
   };
 
+  const getInsightMessage = () => {
+    const calorieProgress = getProgressPercentage(todayTotals.calories, goals?.daily_calories || 2000);
+    const proteinProgress = getProgressPercentage(todayTotals.protein, goals?.protein_g || 150);
+    
+    if (meals.length === 0) return 'Registre suas refeições para acompanhar sua nutrição diária!';
+    if (proteinProgress >= 100) return 'Meta de proteína atingida! Excelente para seus músculos.';
+    if (calorieProgress >= 80 && calorieProgress <= 100) return 'Ótimo controle calórico hoje! Continue assim.';
+    if (calorieProgress > 100) return 'Você excedeu as calorias hoje. Amanhã é um novo dia!';
+    return 'Mantenha o foco na alimentação. Cada refeição conta!';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+      >
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Utensils className="h-6 w-6 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10">
+              <Apple className="h-8 w-8 text-accent" />
+            </div>
             Nutrição
-          </h2>
-          <p className="text-muted-foreground">Acompanhe sua alimentação e macros</p>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe sua alimentação e macros diários
+          </p>
         </div>
         <div className="flex gap-2">
           <Dialog open={isEditingGoals} onOpenChange={setIsEditingGoals}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="border-border/50">
                 <Settings className="h-4 w-4" />
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
+                  <Target className="h-5 w-5 text-accent" />
                   Metas Nutricionais Diárias
                 </DialogTitle>
               </DialogHeader>
@@ -164,7 +183,7 @@ export const NutritionManager = () => {
                     />
                   </div>
                 </div>
-                <Button onClick={handleSaveGoals} className="w-full">
+                <Button onClick={handleSaveGoals} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                   Salvar Metas
                 </Button>
               </div>
@@ -173,7 +192,7 @@ export const NutritionManager = () => {
 
           <Dialog open={isAddingMeal} onOpenChange={setIsAddingMeal}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Refeição
               </Button>
@@ -270,196 +289,225 @@ export const NutritionManager = () => {
                   </div>
                 </div>
 
-                <Button onClick={handleAddMeal} className="w-full" disabled={!newMeal.name}>
+                <Button onClick={handleAddMeal} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={!newMeal.name}>
                   Registrar Refeição
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </motion.div>
 
       {/* Today's Progress */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-1">
-                <Flame className="h-4 w-4 text-orange-500" /> Calorias
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {todayTotals.calories} / {goals?.daily_calories || 2000}
-              </span>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-orange-500/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Calorias</p>
+            <div className="p-2 rounded-lg bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+              <Flame className="h-4 w-4 text-orange-500" />
             </div>
-            <Progress 
-              value={Math.min((todayTotals.calories / (goals?.daily_calories || 2000)) * 100, 100)} 
-              className="h-2"
-            />
-          </CardContent>
+          </div>
+          <p className="text-2xl font-bold mb-2">
+            {todayTotals.calories} <span className="text-sm font-normal text-muted-foreground">/ {goals?.daily_calories || 2000}</span>
+          </p>
+          <Progress 
+            value={getProgressPercentage(todayTotals.calories, goals?.daily_calories || 2000)} 
+            className="h-2"
+          />
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-1">
-                <Beef className="h-4 w-4 text-red-500" /> Proteína
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {todayTotals.protein.toFixed(0)}g / {goals?.protein_g || 150}g
-              </span>
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-red-500/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Proteína</p>
+            <div className="p-2 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+              <Beef className="h-4 w-4 text-red-500" />
             </div>
-            <Progress 
-              value={Math.min((todayTotals.protein / (goals?.protein_g || 150)) * 100, 100)} 
-              className="h-2"
-            />
-          </CardContent>
+          </div>
+          <p className="text-2xl font-bold mb-2">
+            {todayTotals.protein.toFixed(0)}g <span className="text-sm font-normal text-muted-foreground">/ {goals?.protein_g || 150}g</span>
+          </p>
+          <Progress 
+            value={getProgressPercentage(todayTotals.protein, goals?.protein_g || 150)} 
+            className="h-2"
+          />
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-1">
-                <Wheat className="h-4 w-4 text-amber-500" /> Carboidratos
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {todayTotals.carbs.toFixed(0)}g / {goals?.carbs_g || 200}g
-              </span>
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-amber-500/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Carboidratos</p>
+            <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+              <Wheat className="h-4 w-4 text-amber-500" />
             </div>
-            <Progress 
-              value={Math.min((todayTotals.carbs / (goals?.carbs_g || 200)) * 100, 100)} 
-              className="h-2"
-            />
-          </CardContent>
+          </div>
+          <p className="text-2xl font-bold mb-2">
+            {todayTotals.carbs.toFixed(0)}g <span className="text-sm font-normal text-muted-foreground">/ {goals?.carbs_g || 200}g</span>
+          </p>
+          <Progress 
+            value={getProgressPercentage(todayTotals.carbs, goals?.carbs_g || 200)} 
+            className="h-2"
+          />
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-1">
-                <Droplets className="h-4 w-4 text-yellow-500" /> Gordura
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {todayTotals.fat.toFixed(0)}g / {goals?.fat_g || 65}g
-              </span>
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-yellow-500/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Gordura</p>
+            <div className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors">
+              <Droplets className="h-4 w-4 text-yellow-500" />
             </div>
-            <Progress 
-              value={Math.min((todayTotals.fat / (goals?.fat_g || 65)) * 100, 100)} 
-              className="h-2"
-            />
-          </CardContent>
+          </div>
+          <p className="text-2xl font-bold mb-2">
+            {todayTotals.fat.toFixed(0)}g <span className="text-sm font-normal text-muted-foreground">/ {goals?.fat_g || 65}g</span>
+          </p>
+          <Progress 
+            value={getProgressPercentage(todayTotals.fat, goals?.fat_g || 65)} 
+            className="h-2"
+          />
         </Card>
-      </div>
+      </motion.div>
+
+      {/* AI Insight */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <ModuleInsight module="health" customMessage={getInsightMessage()} />
+      </motion.div>
 
       {/* Tabs for Today and History */}
-      <Tabs defaultValue="today" className="w-full">
-        <TabsList>
-          <TabsTrigger value="today">Hoje</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
-        </TabsList>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Tabs defaultValue="today" className="w-full">
+          <TabsList className="bg-card/50 border border-border/50">
+            <TabsTrigger value="today">Hoje</TabsTrigger>
+            <TabsTrigger value="history">Histórico</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="today" className="space-y-4">
-          {todayMeals.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Utensils className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhuma refeição registrada hoje</h3>
-                <p className="text-muted-foreground mb-4">
+          <TabsContent value="today" className="space-y-4 mt-4">
+            {todayMeals.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50 backdrop-blur border-border/50">
+                <div className="p-4 rounded-2xl bg-accent/10 w-fit mx-auto mb-4">
+                  <Utensils className="h-12 w-12 text-accent" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Nenhuma refeição registrada hoje</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   Comece a rastrear sua alimentação para atingir suas metas nutricionais
                 </p>
-                <Button onClick={() => setIsAddingMeal(true)}>
+                <Button onClick={() => setIsAddingMeal(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Primeira Refeição
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {mealTypes.map((type) => {
-                const typeMeals = todayMeals.filter(m => m.meal_type === type.value);
-                if (typeMeals.length === 0) return null;
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {mealTypes.map((type) => {
+                  const typeMeals = todayMeals.filter(m => m.meal_type === type.value);
+                  if (typeMeals.length === 0) return null;
 
-                return (
-                  <Card key={type.value}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        {type.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {typeMeals.map((meal) => (
-                        <div key={meal.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                          <div>
-                            <p className="font-medium">{meal.name}</p>
-                            {meal.description && (
-                              <p className="text-sm text-muted-foreground">{meal.description}</p>
-                            )}
-                            <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                              <span>{meal.calories} kcal</span>
-                              <span>{meal.protein_g}g P</span>
-                              <span>{meal.carbs_g}g C</span>
-                              <span>{meal.fat_g}g G</span>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => deleteMeal(meal.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-4">
-          {Object.entries(groupMealsByDate()).map(([date, dateMeals]) => (
-            <Card key={date}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {format(new Date(date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {dateMeals.map((meal) => {
-                  const mealType = mealTypes.find(t => t.value === meal.meal_type);
                   return (
-                    <div key={meal.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <span>{mealType?.icon}</span>
-                        <div>
-                          <p className="font-medium">{meal.name}</p>
-                          <div className="flex gap-3 text-xs text-muted-foreground">
-                            <span>{meal.calories} kcal</span>
-                            <span>{meal.protein_g}g P</span>
-                            <span>{meal.carbs_g}g C</span>
-                            <span>{meal.fat_g}g G</span>
+                    <Card key={type.value} className="p-5 bg-card/50 backdrop-blur border-border/50">
+                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                        <span className="text-lg">{type.icon}</span>
+                        {type.label}
+                      </h3>
+                      <div className="space-y-3">
+                        {typeMeals.map((meal) => (
+                          <div key={meal.id} className="flex items-center justify-between p-4 rounded-xl bg-background/50 border border-border/30 hover:border-accent/30 transition-all group">
+                            <div>
+                              <p className="font-medium">{meal.name}</p>
+                              {meal.description && (
+                                <p className="text-sm text-muted-foreground mt-1">{meal.description}</p>
+                              )}
+                              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Flame className="h-3 w-3 text-orange-500" />
+                                  {meal.calories} kcal
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Beef className="h-3 w-3 text-red-500" />
+                                  {meal.protein_g}g
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Wheat className="h-3 w-3 text-amber-500" />
+                                  {meal.carbs_g}g
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Droplets className="h-3 w-3 text-yellow-500" />
+                                  {meal.fat_g}g
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                              onClick={() => deleteMeal(meal.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => deleteMeal(meal.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    </Card>
                   );
                 })}
-              </CardContent>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-4">
+            <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+              <ScrollArea className="h-96">
+                <div className="space-y-6">
+                  {Object.entries(groupMealsByDate()).map(([date, dateMeals]) => (
+                    <div key={date}>
+                      <h3 className="text-sm font-semibold mb-3 text-muted-foreground">
+                        {format(new Date(date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                      </h3>
+                      <div className="space-y-2">
+                        {dateMeals.map((meal) => {
+                          const mealType = mealTypes.find(t => t.value === meal.meal_type);
+                          return (
+                            <div key={meal.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-border/30 group">
+                              <div className="flex items-center gap-3">
+                                <span className="text-lg">{mealType?.icon}</span>
+                                <div>
+                                  <p className="font-medium text-sm">{meal.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {meal.calories} kcal • {meal.protein_g}g P • {meal.carbs_g}g C • {meal.fat_g}g G
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={() => deleteMeal(meal.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </Card>
-          ))}
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
     </div>
   );
 };
+
+export default NutritionManager;
