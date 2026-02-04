@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Scale, Ruler, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ModuleInsight } from '@/components/Accountability/AccountabilityPartner';
+import { Plus, Scale, Ruler, Trash2, TrendingUp, TrendingDown, Minus, Heart, Activity } from 'lucide-react';
 import { useHealth } from '@/hooks/useHealth';
 import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 const BodyMeasurementsManager = () => {
   const { 
@@ -99,21 +101,48 @@ const BodyMeasurementsManager = () => {
 
   const bmi = calculateBMI();
 
+  const getBMICategory = (bmiValue: string | null) => {
+    if (!bmiValue) return null;
+    const value = parseFloat(bmiValue);
+    if (value < 18.5) return { label: 'Abaixo do peso', color: 'text-yellow-500' };
+    if (value < 25) return { label: 'Peso normal', color: 'text-green-500' };
+    if (value < 30) return { label: 'Sobrepeso', color: 'text-orange-500' };
+    return { label: 'Obesidade', color: 'text-red-500' };
+  };
+
+  const bmiCategory = getBMICategory(bmi);
+
+  const getInsightMessage = () => {
+    if (bodyMeasurements.length === 0) return 'Registre suas medidas para acompanhar sua evolução física!';
+    if (bmiCategory?.label === 'Peso normal') return 'Excelente! Seu IMC está na faixa saudável. Continue assim!';
+    if (weightTrend?.diff && parseFloat(weightTrend.diff) < 0) return 'Ótimo progresso! Você está perdendo peso consistentemente.';
+    if (bodyMeasurements.length >= 5) return 'Consistência nos registros! Isso ajuda a identificar padrões.';
+    return 'Acompanhar suas medidas é o primeiro passo para a transformação!';
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+      >
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Scale className="h-6 w-6 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10">
+              <Scale className="h-8 w-8 text-accent" />
+            </div>
             Medidas Corporais
-          </h2>
-          <p className="text-muted-foreground">Acompanhe sua evolução física</p>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe sua evolução física ao longo do tempo
+          </p>
         </div>
         
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Nova Medição
             </Button>
@@ -230,150 +259,216 @@ const BodyMeasurementsManager = () => {
                 />
               </div>
               
-              <Button type="submit" className="w-full" disabled={addBodyMeasurement.isPending}>
+              <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={addBodyMeasurement.isPending}>
                 Salvar Medidas
               </Button>
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Current Stats */}
       {latestMeasurement && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Scale className="h-4 w-4" />
-                  <span className="text-xs">Peso</span>
-                </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-muted-foreground">Peso</p>
+              <div className="flex items-center gap-2">
                 {weightTrend && (
                   <div className={`flex items-center gap-1 text-xs ${weightTrend.color}`}>
                     <weightTrend.icon className="h-3 w-3" />
                     {weightTrend.diff}
                   </div>
                 )}
+                <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
+                  <Scale className="h-4 w-4 text-accent" />
+                </div>
               </div>
-              <p className="text-2xl font-bold">
-                {latestMeasurement.weight_kg ? `${Number(latestMeasurement.weight_kg).toFixed(1)} kg` : '-'}
-              </p>
-            </CardContent>
+            </div>
+            <p className="text-3xl font-bold">
+              {latestMeasurement.weight_kg ? `${Number(latestMeasurement.weight_kg).toFixed(1)}` : '-'}
+            </p>
+            <p className="text-sm text-muted-foreground">kg</p>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Ruler className="h-4 w-4" />
-                <span className="text-xs">IMC</span>
+          <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-muted-foreground">IMC</p>
+              <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                <Heart className="h-4 w-4 text-blue-500" />
               </div>
-              <p className="text-2xl font-bold">{bmi || '-'}</p>
-            </CardContent>
+            </div>
+            <p className="text-3xl font-bold">{bmi || '-'}</p>
+            {bmiCategory && (
+              <p className={`text-sm ${bmiCategory.color}`}>{bmiCategory.label}</p>
+            )}
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Ruler className="h-4 w-4" />
-                <span className="text-xs">Cintura</span>
+          <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-muted-foreground">Cintura</p>
+              <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                <Ruler className="h-4 w-4 text-purple-500" />
               </div>
-              <p className="text-2xl font-bold">
-                {latestMeasurement.waist_cm ? `${Number(latestMeasurement.waist_cm).toFixed(1)} cm` : '-'}
-              </p>
-            </CardContent>
+            </div>
+            <p className="text-3xl font-bold">
+              {latestMeasurement.waist_cm ? `${Number(latestMeasurement.waist_cm).toFixed(1)}` : '-'}
+            </p>
+            <p className="text-sm text-muted-foreground">cm</p>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Scale className="h-4 w-4" />
-                <span className="text-xs">Gordura</span>
+          <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-muted-foreground">Gordura</p>
+              <div className="p-2 rounded-lg bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <Activity className="h-4 w-4 text-orange-500" />
               </div>
-              <p className="text-2xl font-bold">
-                {latestMeasurement.body_fat_percent ? `${Number(latestMeasurement.body_fat_percent).toFixed(1)}%` : '-'}
-              </p>
-            </CardContent>
+            </div>
+            <p className="text-3xl font-bold">
+              {latestMeasurement.body_fat_percent ? `${Number(latestMeasurement.body_fat_percent).toFixed(1)}` : '-'}
+            </p>
+            <p className="text-sm text-muted-foreground">%</p>
           </Card>
-        </div>
+        </motion.div>
       )}
+
+      {/* AI Insight */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <ModuleInsight module="health" customMessage={getInsightMessage()} />
+      </motion.div>
 
       {/* Weight Chart */}
       {weightChartData.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Evolução do Peso</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-accent" />
+              Evolução do Peso
+            </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weightChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <AreaChart data={weightChartData}>
+                  <defs>
+                    <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                   <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={['dataMin - 2', 'dataMax + 2']} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))' 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
                     }} 
                   />
-                  <Line 
+                  <Area 
                     type="monotone" 
                     dataKey="peso" 
-                    stroke="hsl(var(--primary))" 
+                    stroke="hsl(var(--accent))" 
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
+                    fill="url(#colorPeso)"
+                    dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        </motion.div>
       )}
 
       {/* Measurements List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Histórico de Medidas</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Scale className="h-5 w-5 text-accent" />
+            Histórico de Medidas
+          </h3>
+          
           {isLoadingMeasurements ? (
-            <p className="text-muted-foreground text-center py-4">Carregando...</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            </div>
           ) : bodyMeasurements.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Nenhuma medida registrada</p>
+            <div className="text-center py-12">
+              <div className="p-4 rounded-2xl bg-accent/10 w-fit mx-auto mb-4">
+                <Scale className="h-10 w-10 text-accent" />
+              </div>
+              <p className="text-muted-foreground">Nenhuma medida registrada</p>
+              <p className="text-sm text-muted-foreground mt-1">Clique em "Nova Medição" para começar</p>
+            </div>
           ) : (
             <ScrollArea className="h-80">
               <div className="space-y-3">
-                {bodyMeasurements.map((measurement) => (
-                  <div
+                {bodyMeasurements.map((measurement, index) => (
+                  <motion.div
                     key={measurement.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * index }}
+                    className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 hover:border-accent/30 transition-all group"
                   >
                     <div>
-                      <p className="font-medium">
+                      <p className="font-semibold">
                         {format(new Date(measurement.date), "dd 'de' MMMM, yyyy", { locale: ptBR })}
                       </p>
-                      <div className="flex flex-wrap gap-3 mt-1 text-sm text-muted-foreground">
-                        {measurement.weight_kg && <span>Peso: {Number(measurement.weight_kg).toFixed(1)}kg</span>}
-                        {measurement.waist_cm && <span>Cintura: {Number(measurement.waist_cm).toFixed(1)}cm</span>}
+                      <div className="flex flex-wrap gap-3 mt-2 text-sm text-muted-foreground">
+                        {measurement.weight_kg && (
+                          <span className="flex items-center gap-1">
+                            <Scale className="h-3 w-3" />
+                            {Number(measurement.weight_kg).toFixed(1)}kg
+                          </span>
+                        )}
+                        {measurement.waist_cm && (
+                          <span className="flex items-center gap-1">
+                            <Ruler className="h-3 w-3" />
+                            Cintura: {Number(measurement.waist_cm).toFixed(1)}cm
+                          </span>
+                        )}
                         {measurement.chest_cm && <span>Peito: {Number(measurement.chest_cm).toFixed(1)}cm</span>}
                         {measurement.arm_cm && <span>Braço: {Number(measurement.arm_cm).toFixed(1)}cm</span>}
-                        {measurement.body_fat_percent && <span>Gordura: {Number(measurement.body_fat_percent).toFixed(1)}%</span>}
+                        {measurement.body_fat_percent && (
+                          <span className="flex items-center gap-1">
+                            <Activity className="h-3 w-3" />
+                            {Number(measurement.body_fat_percent).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                       onClick={() => deleteBodyMeasurement.mutate(measurement.id)}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </ScrollArea>
           )}
-        </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
     </div>
   );
 };

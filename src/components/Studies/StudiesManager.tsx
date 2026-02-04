@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCourses, Course } from '@/hooks/useCourses';
 import { useGamification } from '@/hooks/useGamification';
+import { ModuleInsight } from '@/components/Accountability/AccountabilityPartner';
 import { 
   Plus, 
   BookOpen,
@@ -18,7 +20,9 @@ import {
   Star,
   Search,
   Loader2,
-  Trash2
+  Trash2,
+  GraduationCap,
+  TrendingUp
 } from 'lucide-react';
 
 const StudiesManager = () => {
@@ -42,6 +46,7 @@ const StudiesManager = () => {
   const backlog = filteredCourses.filter(c => c.status === 'backlog');
 
   const stats = getStats();
+  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   const handleAddCourse = async () => {
     if (!newCourse.title.trim()) return;
@@ -79,27 +84,44 @@ const StudiesManager = () => {
     await rewardStudySession();
   };
 
+  const getInsightMessage = () => {
+    if (stats.total === 0) return 'Comece sua jornada de aprendizado! Adicione seu primeiro curso.';
+    if (stats.inProgress === 0 && backlog.length > 0) return `Você tem ${backlog.length} cursos na lista. Que tal iniciar um hoje?`;
+    if (completionRate >= 70) return `Excelente! Você já completou ${completionRate}% dos seus cursos. Continue assim!`;
+    if (stats.totalHours >= 50) return `Incrível! Você já estudou ${Math.round(stats.totalHours)}h. Conhecimento é poder!`;
+    return `Você tem ${stats.inProgress} cursos em andamento. Foco no aprendizado!`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Estudos</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10">
+              <GraduationCap className="h-8 w-8 text-accent" />
+            </div>
+            Estudos
+          </h1>
+          <p className="text-muted-foreground mt-1">
             Organize seus cursos e acompanhe seu aprendizado
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Novo Curso
             </Button>
@@ -153,48 +175,79 @@ const StudiesManager = () => {
                   placeholder="0"
                 />
               </div>
-              <Button onClick={handleAddCourse} className="w-full">
+              <Button onClick={handleAddCourse} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                 Adicionar Curso
               </Button>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground">Cursos</p>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+      {/* Stats Cards */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Total de Cursos</p>
+            <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
+              <BookOpen className="h-4 w-4 text-accent" />
+            </div>
           </div>
-          <p className="text-2xl font-semibold">{stats.total}</p>
+          <p className="text-3xl font-bold">{stats.total}</p>
         </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground">Em Progresso</p>
-            <Play className="h-4 w-4 text-primary" />
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Em Progresso</p>
+            <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+              <Play className="h-4 w-4 text-blue-500" />
+            </div>
           </div>
-          <p className="text-2xl font-semibold">{stats.inProgress}</p>
+          <p className="text-3xl font-bold">{stats.inProgress}</p>
         </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground">Concluídos</p>
-            <CheckCircle2 className="h-4 w-4 text-success" />
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Concluídos</p>
+            <div className="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </div>
           </div>
-          <p className="text-2xl font-semibold">{stats.completed}</p>
+          <p className="text-3xl font-bold">{stats.completed}</p>
+          <p className="text-xs text-muted-foreground mt-1">{completionRate}% de conclusão</p>
         </Card>
-        <Card className="p-4 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground">Horas Estudadas</p>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Horas Estudadas</p>
+            <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+              <Clock className="h-4 w-4 text-purple-500" />
+            </div>
           </div>
-          <p className="text-2xl font-semibold">{Math.round(stats.totalHours)}h</p>
+          <p className="text-3xl font-bold">{Math.round(stats.totalHours)}h</p>
         </Card>
-      </div>
+      </motion.div>
+
+      {/* AI Insight */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <ModuleInsight module="studies" customMessage={getInsightMessage()} />
+      </motion.div>
 
       {/* Search */}
-      <div className="flex items-center gap-3">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center gap-3"
+      >
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -202,186 +255,248 @@ const StudiesManager = () => {
             placeholder="Buscar cursos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-4 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="w-full h-10 pl-10 pr-4 bg-card/50 backdrop-blur border border-border/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all"
           />
         </div>
-      </div>
+      </motion.div>
 
       {courses.length === 0 ? (
-        <Card className="p-8 text-center">
-          <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Nenhum curso cadastrado</h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            Comece adicionando seus cursos para acompanhar seu aprendizado
-          </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Primeiro Curso
-          </Button>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="p-12 text-center bg-card/50 backdrop-blur border-border/50">
+            <div className="p-4 rounded-2xl bg-accent/10 w-fit mx-auto mb-4">
+              <BookOpen className="h-12 w-12 text-accent" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Nenhum curso cadastrado</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Comece adicionando seus cursos para acompanhar seu aprendizado e evoluir constantemente
+            </p>
+            <Button onClick={() => setIsDialogOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Primeiro Curso
+            </Button>
+          </Card>
+        </motion.div>
       ) : (
-        <>
+        <div className="space-y-8">
           {/* In Progress */}
-          {inProgress.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Em Progresso
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {inProgress.map((course) => (
-                  <Card key={course.id} className="p-5 bg-card border-border hover:border-muted-foreground/30 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        {course.platform && (
-                          <Badge variant="outline" className="text-xs">
-                            {course.platform}
-                          </Badge>
-                        )}
-                        {course.skill && (
-                          <Badge variant="secondary" className="text-xs bg-muted">
-                            {course.skill}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => deleteCourse(course.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <h3 className="font-medium mb-3">{course.title}</h3>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progresso</span>
-                        <span className="font-medium">{Math.round(course.progress)}%</span>
-                      </div>
-                      <Progress value={course.progress} className="h-2" />
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{Math.round(course.completed_hours)}h de {course.total_hours}h</span>
-                        <div className="flex gap-1">
+          <AnimatePresence>
+            {inProgress.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="space-y-4"
+              >
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Play className="h-5 w-5 text-blue-500" />
+                  Em Progresso
+                  <Badge variant="secondary" className="ml-2">{inProgress.length}</Badge>
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {inProgress.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
+                      <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {course.platform && (
+                              <Badge variant="outline" className="text-xs border-accent/30 text-accent">
+                                {course.platform}
+                              </Badge>
+                            )}
+                            {course.skill && (
+                              <Badge variant="secondary" className="text-xs">
+                                {course.skill}
+                              </Badge>
+                            )}
+                          </div>
                           <Button 
                             variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2"
-                            onClick={() => handleUpdateProgress(course, Math.min(100, course.progress + 10))}
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => deleteCourse(course.id)}
                           >
-                            +10%
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2"
-                            onClick={() => handleCompleteCourse(course)}
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Concluir
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+
+                        <h3 className="font-semibold text-lg mb-4">{course.title}</h3>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Progresso</span>
+                            <span className="font-semibold text-accent">{Math.round(course.progress)}%</span>
+                          </div>
+                          <Progress value={course.progress} className="h-2" />
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              {Math.round(course.completed_hours)}h de {course.total_hours}h
+                            </span>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-8 text-xs"
+                                onClick={() => handleUpdateProgress(course, Math.min(100, course.progress + 10))}
+                              >
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                                +10%
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className="h-8 text-xs bg-green-500 hover:bg-green-600 text-white"
+                                onClick={() => handleCompleteCourse(course)}
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Concluir
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Backlog */}
-          {backlog.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Na Lista
-              </h2>
-              <div className="space-y-2">
-                {backlog.map((course) => (
-                  <Card key={course.id} className="p-4 bg-card border-border hover:border-muted-foreground/30 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{course.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {course.platform && <span>{course.platform}</span>}
-                          {course.platform && course.total_hours > 0 && <span>•</span>}
-                          {course.total_hours > 0 && <span>{course.total_hours}h</span>}
+          <AnimatePresence>
+            {backlog.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="space-y-4"
+              >
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                  Na Lista
+                  <Badge variant="secondary" className="ml-2">{backlog.length}</Badge>
+                </h2>
+                <div className="space-y-2">
+                  {backlog.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * index }}
+                    >
+                      <Card className="p-4 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-muted/50">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{course.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              {course.platform && <span>{course.platform}</span>}
+                              {course.platform && course.total_hours > 0 && <span>•</span>}
+                              {course.total_hours > 0 && <span>{course.total_hours}h</span>}
+                            </div>
+                          </div>
+                          {course.skill && (
+                            <Badge variant="secondary" className="text-xs shrink-0">
+                              {course.skill}
+                            </Badge>
+                          )}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => handleStartCourse(course)}
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Iniciar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            onClick={() => deleteCourse(course.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                      {course.skill && (
-                        <Badge variant="secondary" className="text-xs bg-muted shrink-0">
-                          {course.skill}
-                        </Badge>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="shrink-0"
-                        onClick={() => handleStartCourse(course)}
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Iniciar
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive shrink-0"
-                        onClick={() => deleteCourse(course.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Completed */}
-          {completed.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Concluídos
-              </h2>
-              <div className="space-y-2">
-                {completed.map((course) => (
-                  <Card key={course.id} className="p-4 bg-muted/30 border-transparent">
-                    <div className="flex items-center gap-4">
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate text-muted-foreground">{course.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {course.platform && <span>{course.platform}</span>}
-                          {course.platform && course.total_hours > 0 && <span>•</span>}
-                          {course.total_hours > 0 && <span>{course.total_hours}h</span>}
+          <AnimatePresence>
+            {completed.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="space-y-4"
+              >
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  Concluídos
+                  <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-500">{completed.length}</Badge>
+                </h2>
+                <div className="space-y-2">
+                  {completed.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * index }}
+                    >
+                      <Card className="p-4 bg-green-500/5 border-green-500/20 group">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-green-500/10">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{course.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              {course.platform && <span>{course.platform}</span>}
+                              {course.platform && course.total_hours > 0 && <span>•</span>}
+                              {course.total_hours > 0 && <span>{course.total_hours}h concluídas</span>}
+                            </div>
+                          </div>
+                          {course.rating && (
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star 
+                                  key={star} 
+                                  className={`h-4 w-4 ${star <= course.rating! ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`} 
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            onClick={() => deleteCourse(course.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                      {course.rating && (
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star 
-                              key={star} 
-                              className={`h-3 w-3 ${star <= course.rating! ? 'text-warning fill-warning' : 'text-muted-foreground'}`} 
-                            />
-                          ))}
-                        </div>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive shrink-0"
-                        onClick={() => deleteCourse(course.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );

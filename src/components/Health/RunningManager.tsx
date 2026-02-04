@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,12 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, TrendingUp, Timer, MapPin, Trash2, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ModuleInsight } from '@/components/Accountability/AccountabilityPartner';
+import { Plus, TrendingUp, Timer, MapPin, Trash2, Activity, Zap, Award } from 'lucide-react';
 import { useHealth } from '@/hooks/useHealth';
 import { useGamification } from '@/hooks/useGamification';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 const RunningManager = () => {
   const { 
@@ -62,7 +65,7 @@ const RunningManager = () => {
     if (!pace) return '-';
     const minutes = Math.floor(pace);
     const seconds = Math.round((pace - minutes) * 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const chartData = [...runningSessions]
@@ -74,21 +77,48 @@ const RunningManager = () => {
       pace: Number(session.pace) || 0,
     }));
 
+  const getInsightMessage = () => {
+    if (runningSessions.length === 0) return 'Registre sua primeira corrida e inicie sua jornada de transformação!';
+    if (runningStats.totalKm >= 100) return `Incrível! Você já correu ${runningStats.totalKm.toFixed(0)}km. Verdadeiro atleta!`;
+    if (runningStats.totalSessions >= 20) return `${runningStats.totalSessions} corridas registradas! Consistência é a chave.`;
+    if (runningStats.bestPace) return `Seu melhor pace é ${formatPace(runningStats.bestPace)} min/km. Continue evoluindo!`;
+    return 'Cada corrida conta. Mantenha o ritmo e supere seus limites!';
+  };
+
+  const getTerrainColor = (terrain: string) => {
+    const colors: Record<string, string> = {
+      'asfalto': 'bg-slate-500/20 text-slate-400',
+      'trilha': 'bg-green-500/20 text-green-400',
+      'pista': 'bg-orange-500/20 text-orange-400',
+      'esteira': 'bg-blue-500/20 text-blue-400',
+      'areia': 'bg-yellow-500/20 text-yellow-400',
+    };
+    return colors[terrain] || 'bg-muted text-muted-foreground';
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+      >
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-accent/10">
+              <Activity className="h-8 w-8 text-accent" />
+            </div>
             Corridas
-          </h2>
-          <p className="text-muted-foreground">Rastreie seu progresso nas corridas</p>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Rastreie seu progresso e evolua constantemente
+          </p>
         </div>
         
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Nova Corrida
             </Button>
@@ -157,136 +187,193 @@ const RunningManager = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={addRunningSession.isPending}>
+              <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={addRunningSession.isPending}>
                 Salvar Corrida
               </Button>
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <MapPin className="h-4 w-4" />
-              <span className="text-xs">Total</span>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Distância Total</p>
+            <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
+              <MapPin className="h-4 w-4 text-accent" />
             </div>
-            <p className="text-2xl font-bold">{runningStats.totalKm.toFixed(1)} km</p>
-          </CardContent>
+          </div>
+          <p className="text-3xl font-bold">{runningStats.totalKm.toFixed(1)}</p>
+          <p className="text-sm text-muted-foreground">quilômetros</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Activity className="h-4 w-4" />
-              <span className="text-xs">Corridas</span>
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Corridas</p>
+            <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+              <Activity className="h-4 w-4 text-blue-500" />
             </div>
-            <p className="text-2xl font-bold">{runningStats.totalSessions}</p>
-          </CardContent>
+          </div>
+          <p className="text-3xl font-bold">{runningStats.totalSessions}</p>
+          <p className="text-sm text-muted-foreground">sessões</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Timer className="h-4 w-4" />
-              <span className="text-xs">Pace Médio</span>
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-accent/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Pace Médio</p>
+            <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+              <Timer className="h-4 w-4 text-purple-500" />
             </div>
-            <p className="text-2xl font-bold">{formatPace(runningStats.averagePace)}</p>
-          </CardContent>
+          </div>
+          <p className="text-3xl font-bold">{formatPace(runningStats.averagePace)}</p>
+          <p className="text-sm text-muted-foreground">min/km</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-xs">Melhor Pace</span>
+
+        <Card className="p-5 bg-card/50 backdrop-blur border-border/50 hover:border-green-500/30 transition-all group">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-muted-foreground">Melhor Pace</p>
+            <div className="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+              <Award className="h-4 w-4 text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-primary">{formatPace(runningStats.bestPace)}</p>
-          </CardContent>
+          </div>
+          <p className="text-3xl font-bold text-green-500">{formatPace(runningStats.bestPace)}</p>
+          <p className="text-sm text-muted-foreground">min/km</p>
         </Card>
-      </div>
+      </motion.div>
+
+      {/* AI Insight */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <ModuleInsight module="health" customMessage={getInsightMessage()} />
+      </motion.div>
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Evolução de Distância</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-accent" />
+              Evolução de Distância
+            </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorKm" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                   <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))' 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
                     }} 
                   />
-                  <Line 
+                  <Area 
                     type="monotone" 
                     dataKey="km" 
-                    stroke="hsl(var(--primary))" 
+                    stroke="hsl(var(--accent))" 
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
+                    fill="url(#colorKm)"
+                    dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        </motion.div>
       )}
 
       {/* Sessions List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Histórico de Corridas</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-accent" />
+            Histórico de Corridas
+          </h3>
+          
           {isLoadingRunning ? (
-            <p className="text-muted-foreground text-center py-4">Carregando...</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            </div>
           ) : runningSessions.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Nenhuma corrida registrada</p>
+            <div className="text-center py-12">
+              <div className="p-4 rounded-2xl bg-accent/10 w-fit mx-auto mb-4">
+                <Activity className="h-10 w-10 text-accent" />
+              </div>
+              <p className="text-muted-foreground">Nenhuma corrida registrada</p>
+              <p className="text-sm text-muted-foreground mt-1">Clique em "Nova Corrida" para começar</p>
+            </div>
           ) : (
             <ScrollArea className="h-80">
               <div className="space-y-3">
-                {runningSessions.map((session) => (
-                  <div
+                {runningSessions.map((session, index) => (
+                  <motion.div
                     key={session.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * index }}
+                    className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 hover:border-accent/30 transition-all group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <TrendingUp className="h-5 w-5 text-primary" />
+                      <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <Activity className="h-6 w-6 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">{Number(session.distance_km).toFixed(2)} km</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-lg">{Number(session.distance_km).toFixed(2)} km</p>
+                          <Badge className={getTerrainColor(session.terrain || 'asfalto')}>
+                            {session.terrain}
+                          </Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(session.date), "dd 'de' MMMM", { locale: ptBR })} • {session.terrain}
+                          {format(new Date(session.date), "dd 'de' MMMM", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="font-medium">{session.duration_minutes} min</p>
-                        <p className="text-sm text-muted-foreground">{formatPace(Number(session.pace))}</p>
+                        <p className="font-semibold">{session.duration_minutes} min</p>
+                        <p className="text-sm text-accent">{formatPace(Number(session.pace))} min/km</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteRunningSession.mutate(session.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </ScrollArea>
           )}
-        </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
     </div>
   );
 };

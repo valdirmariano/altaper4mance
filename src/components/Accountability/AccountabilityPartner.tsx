@@ -274,7 +274,7 @@ export const AccountabilityButton: React.FC<{
 
 // Inline insights for specific modules
 export const ModuleInsight: React.FC<{
-  module: 'tasks' | 'habits' | 'goals' | 'finance' | 'workout';
+  module: 'tasks' | 'habits' | 'goals' | 'finance' | 'workout' | 'health' | 'studies';
   data?: Record<string, unknown>;
   customMessage?: string;
 }> = ({ module, data, customMessage }) => {
@@ -301,9 +301,15 @@ export const ModuleInsight: React.FC<{
           message: 'Controle financeiro é liberdade. Cada real conta.',
         };
       case 'workout':
+      case 'health':
         return {
           icon: Dumbbell,
           message: 'Seu único competidor é quem você foi ontem. Supere-se!',
+        };
+      case 'studies':
+        return {
+          icon: Lightbulb,
+          message: 'Conhecimento é o único investimento que nunca perde valor. Continue aprendendo!',
         };
       default:
         return null;
