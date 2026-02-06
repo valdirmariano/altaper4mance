@@ -1,20 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamification } from '@/hooks/useGamification';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play,
   Pause,
   RotateCcw,
   SkipForward,
-  Settings,
   Volume2,
   VolumeX,
   Brain,
-  Coffee
+  Coffee,
+  Timer,
+  Zap,
+  Target,
+  TrendingUp
 } from 'lucide-react';
 
 const PomodoroTimer = () => {
@@ -32,8 +36,6 @@ const PomodoroTimer = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [localSessions, setLocalSessions] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const modes = {
     'focus': { label: 'Foco', duration: 25 * 60, icon: Brain },
@@ -41,9 +43,9 @@ const PomodoroTimer = () => {
     'long-break': { label: 'Pausa Longa', duration: 15 * 60, icon: Coffee },
   };
 
-  // Sync local sessions with database
   const totalSessions = user ? sessionsCount : localSessions;
   const totalFocusMinutes = user ? focusMinutes : localSessions * 25;
+  const goalProgress = dailyGoal > 0 ? Math.min((totalSessions / dailyGoal) * 100, 100) : 0;
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -53,7 +55,6 @@ const PomodoroTimer = () => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isRunning) {
-      // Timer completed
       setIsRunning(false);
       
       if (soundEnabled) {
@@ -61,7 +62,6 @@ const PomodoroTimer = () => {
       }
       
       if (mode === 'focus') {
-        // Save session
         if (user) {
           incrementSession(25);
         } else {
@@ -70,7 +70,6 @@ const PomodoroTimer = () => {
         
         toast.success('🎉 Sessão de foco concluída!');
         
-        // Auto switch to break
         const newSessionCount = totalSessions + 1;
         if (newSessionCount % 4 === 0) {
           setMode('long-break');
@@ -91,7 +90,6 @@ const PomodoroTimer = () => {
 
   const playNotificationSound = () => {
     try {
-      // Use Web Audio API for notification sound
       const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -142,69 +140,144 @@ const PomodoroTimer = () => {
   };
 
   const progress = ((modes[mode].duration - timeLeft) / modes[mode].duration) * 100;
+  const circumference = 2 * Math.PI * 100;
+
+  const statCards = [
+    { icon: Zap, label: 'Sessões Hoje', value: totalSessions.toString(), sub: `de ${dailyGoal}` },
+    { icon: Timer, label: 'Tempo Focado', value: `${totalFocusMinutes}`, sub: 'minutos' },
+    { icon: Target, label: 'Meta Diária', value: `${Math.round(goalProgress)}%`, sub: goalProgress >= 100 ? 'Concluída!' : 'em progresso' },
+  ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pomodoro</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-3xl font-bold tracking-tight">Pomodoro</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             Técnica de gestão de tempo para foco máximo
           </p>
         </div>
-        <Button variant="ghost" size="icon">
-          <Settings className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="text-muted-foreground"
+        >
+          {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </Button>
-      </div>
+      </motion.div>
 
-      {/* Timer */}
-      <div className="flex justify-center">
-        <Card className="p-8 bg-card border-border max-w-md w-full">
+      {/* Stats Cards */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        {statCards.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+          >
+            <Card className="p-4 bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card/80 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted/50">
+                  <stat.icon className="h-4 w-4 text-foreground/70" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">{stat.value}</span>
+                    <span className="text-xs text-muted-foreground">{stat.sub}</span>
+                  </div>
+                </div>
+              </div>
+              {stat.label === 'Meta Diária' && (
+                <div className="mt-3 h-1.5 bg-muted/50 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-foreground/60 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${goalProgress}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                  />
+                </div>
+              )}
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Timer Central */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        transition={{ delay: 0.2 }}
+        className="flex justify-center"
+      >
+        <Card className="p-8 md:p-12 bg-card/50 backdrop-blur-sm border-border/50 max-w-lg w-full">
           {/* Mode Tabs */}
-          <div className="flex justify-center gap-2 mb-8">
-            {(Object.entries(modes) as [keyof typeof modes, typeof modes[keyof typeof modes]][]).map(([key, value]) => (
-              <Button
-                key={key}
-                variant={mode === key ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleModeChange(key)}
-                className="text-xs"
-              >
-                {value.label}
-              </Button>
-            ))}
+          <div className="flex justify-center gap-1 mb-10 p-1 bg-muted/30 rounded-xl">
+            {(Object.entries(modes) as [keyof typeof modes, typeof modes[keyof typeof modes]][]).map(([key, value]) => {
+              const Icon = value.icon;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleModeChange(key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    mode === key
+                      ? 'bg-foreground text-background shadow-lg'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {value.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Timer Display */}
-          <div className="text-center mb-8">
+          {/* Circular Timer */}
+          <div className="text-center mb-10">
             <div className="relative inline-flex items-center justify-center">
-              <svg className="w-48 h-48 transform -rotate-90">
+              <svg className="w-56 h-56 md:w-64 md:h-64 transform -rotate-90">
                 <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  className="stroke-muted fill-none"
-                  strokeWidth="8"
+                  cx="50%"
+                  cy="50%"
+                  r="100"
+                  className="fill-none stroke-muted/30"
+                  strokeWidth="6"
                 />
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  className={`fill-none transition-all duration-300 ${
-                    mode === 'focus' ? 'stroke-foreground' : 'stroke-success'
-                  }`}
-                  strokeWidth="8"
+                <motion.circle
+                  cx="50%"
+                  cy="50%"
+                  r="100"
+                  className="fill-none stroke-foreground"
+                  strokeWidth="6"
                   strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 88}
-                  strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
+                  strokeDasharray={circumference}
+                  animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+                  transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-light tracking-tight font-mono">
-                  {formatTime(timeLeft)}
-                </span>
-                <span className="text-sm text-muted-foreground mt-2">
+                <AnimatePresence mode="wait">
+                  <motion.span 
+                    key={timeLeft}
+                    initial={{ opacity: 0.8, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-6xl md:text-7xl font-light tracking-tight font-mono"
+                  >
+                    {formatTime(timeLeft)}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="text-sm text-muted-foreground mt-2 uppercase tracking-wider">
                   {modes[mode].label}
                 </span>
               </div>
@@ -212,71 +285,72 @@ const PomodoroTimer = () => {
           </div>
 
           {/* Controls */}
-          <div className="flex justify-center gap-3">
-            <Button variant="ghost" size="icon" onClick={handleReset}>
+          <div className="flex justify-center items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleReset}
+              className="h-12 w-12 rounded-full"
+            >
               <RotateCcw className="h-5 w-5" />
             </Button>
+            
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button 
+                size="lg" 
+                className="min-w-40 h-14 rounded-full text-base font-medium"
+                onClick={() => setIsRunning(!isRunning)}
+              >
+                {isRunning ? (
+                  <>
+                    <Pause className="h-5 w-5 mr-2" />
+                    Pausar
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-5 w-5 mr-2" />
+                    Iniciar
+                  </>
+                )}
+              </Button>
+            </motion.div>
+            
             <Button 
-              size="lg" 
-              className="min-w-32"
-              onClick={() => setIsRunning(!isRunning)}
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSkip}
+              className="h-12 w-12 rounded-full"
             >
-              {isRunning ? (
-                <>
-                  <Pause className="h-5 w-5 mr-2" />
-                  Pausar
-                </>
-              ) : (
-                <>
-                  <Play className="h-5 w-5 mr-2" />
-                  Iniciar
-                </>
-              )}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleSkip}>
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Sound Toggle */}
-          <div className="flex justify-center mt-6">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="text-muted-foreground"
-            >
-              {soundEnabled ? (
-                <Volume2 className="h-4 w-4 mr-2" />
-              ) : (
-                <VolumeX className="h-4 w-4 mr-2" />
-              )}
-              Som {soundEnabled ? 'ativado' : 'desativado'}
-            </Button>
+          {/* Session Dots */}
+          <div className="flex justify-center gap-2 mt-8">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  i < (totalSessions % 4) ? 'bg-foreground' : 'bg-muted/50'
+                }`}
+                animate={{ scale: i < (totalSessions % 4) ? 1.2 : 1 }}
+              />
+            ))}
+            <span className="text-xs text-muted-foreground ml-2">
+              {4 - (totalSessions % 4)} até pausa longa
+            </span>
           </div>
         </Card>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
-        <Card className="p-4 bg-card border-border text-center">
-          <p className="text-xs text-muted-foreground mb-1">Sessões Hoje</p>
-          <p className="text-2xl font-semibold">{totalSessions}</p>
-        </Card>
-        <Card className="p-4 bg-card border-border text-center">
-          <p className="text-xs text-muted-foreground mb-1">Tempo Focado</p>
-          <p className="text-2xl font-semibold">{totalFocusMinutes}min</p>
-        </Card>
-        <Card className="p-4 bg-card border-border text-center">
-          <p className="text-xs text-muted-foreground mb-1">Meta Diária</p>
-          <p className="text-2xl font-semibold">{totalSessions}/{dailyGoal}</p>
-        </Card>
-      </div>
+      </motion.div>
 
       {!user && (
-        <p className="text-center text-muted-foreground text-sm">
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-muted-foreground text-sm"
+        >
           Faça login para salvar suas sessões permanentemente
-        </p>
+        </motion.p>
       )}
     </div>
   );
