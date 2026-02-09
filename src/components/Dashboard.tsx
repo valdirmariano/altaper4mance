@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,8 @@ import {
   Brain,
   Dumbbell
 } from 'lucide-react';
+import { format, subDays, startOfDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface DashboardProps {
   onNavigateToSection?: (section: string) => void;
@@ -53,7 +55,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
   const { user } = useAuth();
   const { stats, xpToNextLevel, currentLevelXP, xpProgress } = useGamification();
   
-  // Supabase data hooks
   const { tasks, loading: tasksLoading, toggleTask } = useTasks();
   const { habits, loading: habitsLoading, toggleHabitToday, isHabitCompletedOnDate, getCompletedTodayCount } = useHabits();
   const { goals, loading: goalsLoading } = useGoals();
@@ -64,7 +65,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
 
   const isLoading = tasksLoading || habitsLoading || goalsLoading || transactionsLoading;
 
-  // Pomodoro timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (pomodoroActive && pomodoroTime > 0) {
@@ -81,8 +81,38 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
   const todayHabits = habits.slice(0, 6);
   const completedHabits = getCompletedTodayCount();
 
-  // Calculate finances from Supabase
   const { receitas: totalReceitas, despesas: totalDespesas, saldo } = getMonthlyStats();
+
+  // Build real weekly activity data from tasks
+  const weeklyData = useMemo(() => {
+    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(new Date(), 6 - i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const doneTasks = tasks.filter(t => t.status === 'done' && t.updated_at?.startsWith(dateStr)).length;
+      return {
+        day: days[date.getDay()],
+        tasks: doneTasks,
+      };
+    });
+  }, [tasks]);
+
+  // Category spending from real transactions
+  const spendingCategories = useMemo(() => {
+    const catMap: Record<string, number> = {};
+    const colors = [
+      'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))',
+      'hsl(var(--info))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))'
+    ];
+    transactions
+      .filter(t => t.type === 'despesa')
+      .forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+    
+    return Object.entries(catMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }));
+  }, [transactions]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -92,10 +122,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      style: 'currency', currency: 'BRL',
+      minimumFractionDigits: 0, maximumFractionDigits: 0
     }).format(value);
   };
 
@@ -106,34 +134,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
     return 'Boa noite';
   };
 
-  // Mock weekly activity data for chart
-  const weeklyData = [
-    { day: 'Seg', tasks: 5, habits: 4, focus: 2 },
-    { day: 'Ter', tasks: 8, habits: 5, focus: 3 },
-    { day: 'Qua', tasks: 4, habits: 6, focus: 4 },
-    { day: 'Qui', tasks: 6, habits: 5, focus: 2 },
-    { day: 'Sex', tasks: 7, habits: 4, focus: 5 },
-    { day: 'Sáb', tasks: 3, habits: 3, focus: 1 },
-    { day: 'Dom', tasks: 2, habits: 5, focus: 0 },
-  ];
-
-  // Category spending for pie chart
-  const spendingCategories = [
-    { name: 'Moradia', value: 35, color: 'hsl(var(--accent))' },
-    { name: 'Alimentação', value: 25, color: 'hsl(var(--success))' },
-    { name: 'Transporte', value: 15, color: 'hsl(var(--warning))' },
-    { name: 'Lazer', value: 15, color: 'hsl(var(--info))' },
-    { name: 'Outros', value: 10, color: 'hsl(var(--muted-foreground))' },
-  ];
-
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   const itemVariants = {
@@ -162,7 +165,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 </p>
               </div>
               
-              {/* Level & Streak Badge */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-card to-muted/30 border border-border/50 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
@@ -174,9 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Dias</p>
                     </div>
                   </div>
-                  
                   <div className="w-px h-10 bg-border/50" />
-                  
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center">
                       <Zap className="h-4 w-4 text-accent" />
@@ -213,7 +213,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
 
             {/* Quick Stats Grid */}
             <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Tasks Card */}
               <Card className="p-4 bg-gradient-to-br from-card to-muted/20 border-border/50 hover:border-accent/30 transition-all duration-300 group cursor-pointer"
                 onClick={() => onNavigateToSection?.('tasks')}>
                 <div className="flex items-start justify-between">
@@ -228,7 +227,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 </div>
               </Card>
 
-              {/* Habits Card */}
               <Card className="p-4 bg-gradient-to-br from-card to-muted/20 border-border/50 hover:border-success/30 transition-all duration-300 group cursor-pointer"
                 onClick={() => onNavigateToSection?.('habits')}>
                 <div className="flex items-start justify-between">
@@ -243,7 +241,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 </div>
               </Card>
 
-              {/* Goals Card */}
               <Card className="p-4 bg-gradient-to-br from-card to-muted/20 border-border/50 hover:border-warning/30 transition-all duration-300 group cursor-pointer"
                 onClick={() => onNavigateToSection?.('goals')}>
                 <div className="flex items-start justify-between">
@@ -258,7 +255,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 </div>
               </Card>
 
-              {/* Balance Card */}
               <Card className={cn(
                 "p-4 bg-gradient-to-br from-card to-muted/20 border-border/50 transition-all duration-300 group cursor-pointer",
                 saldo >= 0 ? "hover:border-success/30" : "hover:border-destructive/30"
@@ -270,13 +266,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                   )}>
                     <DollarSign className={cn("h-5 w-5", saldo >= 0 ? "text-success" : "text-destructive")} />
                   </div>
-                  <div className="flex items-center gap-1">
-                    {saldo >= 0 ? (
-                      <ArrowUpRight className="h-4 w-4 text-success" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-destructive" />
-                    )}
-                  </div>
+                  {saldo >= 0 ? (
+                    <ArrowUpRight className="h-4 w-4 text-success" />
+                  ) : (
+                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                  )}
                 </div>
                 <div className="mt-4">
                   <p className={cn("text-2xl font-bold", saldo >= 0 ? "text-success" : "text-destructive")}>
@@ -299,14 +293,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     </div>
                     <h3 className="font-semibold">Tarefas Prioritárias</h3>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs text-muted-foreground hover:text-accent"
-                    onClick={() => onNavigateToSection?.('tasks')}
-                  >
-                    Ver todas
-                    <ArrowRight className="h-3 w-3 ml-1" />
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-accent"
+                    onClick={() => onNavigateToSection?.('tasks')}>
+                    Ver todas <ArrowRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
                 
@@ -314,38 +303,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                   {todayTasks.map((task) => {
                     const isDone = task.status === 'done';
                     return (
-                      <motion.div 
-                        key={task.id}
-                        whileHover={{ x: 4 }}
+                      <motion.div key={task.id} whileHover={{ x: 4 }}
                         className={cn(
                           "group flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
-                          isDone 
-                            ? 'bg-muted/30 border-transparent' 
-                            : 'border-border/50 hover:border-accent/30 hover:bg-muted/20'
+                          isDone ? 'bg-muted/30 border-transparent' : 'border-border/50 hover:border-accent/30 hover:bg-muted/20'
                         )}
-                        onClick={() => toggleTask(task.id)}
-                      >
-                        <Checkbox 
-                          checked={isDone} 
-                          className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                        />
-                        <span className={cn(
-                          "flex-1 text-sm",
-                          isDone && 'line-through text-muted-foreground'
+                        onClick={() => toggleTask(task.id)}>
+                        <Checkbox checked={isDone} className="data-[state=checked]:bg-accent data-[state=checked]:border-accent" />
+                        <span className={cn("flex-1 text-sm", isDone && 'line-through text-muted-foreground')}>{task.title}</span>
+                        <Badge variant="outline" className={cn(
+                          "text-[10px] px-2 opacity-0 group-hover:opacity-100 transition-opacity",
+                          task.priority === 'p0' || task.priority === 'alta' ? 'border-destructive/50 text-destructive' 
+                            : task.priority === 'p1' || task.priority === 'média' ? 'border-warning/50 text-warning' 
+                            : 'border-muted text-muted-foreground'
                         )}>
-                          {task.title}
-                        </span>
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-[10px] px-2 opacity-0 group-hover:opacity-100 transition-opacity",
-                            task.priority === 'p0' || task.priority === 'alta'
-                              ? 'border-destructive/50 text-destructive' 
-                              : task.priority === 'p1' || task.priority === 'média'
-                                ? 'border-warning/50 text-warning' 
-                                : 'border-muted text-muted-foreground'
-                          )}
-                        >
                           {task.priority}
                         </Badge>
                       </motion.div>
@@ -361,13 +332,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                   )}
                 </div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4 border-dashed border-border/50 hover:border-accent/50 hover:bg-accent/5"
-                  onClick={() => onNavigateToSection?.('tasks')}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar tarefa
+                <Button variant="outline" className="w-full mt-4 border-dashed border-border/50 hover:border-accent/50 hover:bg-accent/5"
+                  onClick={() => onNavigateToSection?.('tasks')}>
+                  <Plus className="h-4 w-4 mr-2" /> Adicionar tarefa
                 </Button>
               </Card>
 
@@ -382,24 +349,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 
                 <div className="text-center">
                   <div className="relative inline-flex items-center justify-center mb-6">
-                    {/* Outer ring */}
                     <div className={cn(
                       "absolute inset-0 rounded-full border-4 transition-all duration-300",
-                      pomodoroActive 
-                        ? "border-accent/30 shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)]" 
-                        : "border-muted/30"
+                      pomodoroActive ? "border-accent/30 shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)]" : "border-muted/30"
                     )} />
-                    
-                    {/* Timer display */}
                     <div className={cn(
                       "w-36 h-36 rounded-full flex flex-col items-center justify-center",
                       "bg-gradient-to-br from-muted/20 to-transparent",
                       "border-2 transition-all duration-300",
                       pomodoroActive ? "border-accent" : "border-border/50"
                     )}>
-                      <span className="text-4xl font-light tracking-tight font-mono">
-                        {formatTime(pomodoroTime)}
-                      </span>
+                      <span className="text-4xl font-light tracking-tight font-mono">{formatTime(pomodoroTime)}</span>
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
                         {pomodoroActive ? 'Focando...' : 'Pronto'}
                       </span>
@@ -407,45 +367,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                   </div>
                   
                   <div className="flex justify-center gap-2 mb-4">
-                    <Button 
-                      variant={pomodoroActive ? "secondary" : "default"}
-                      size="sm"
-                      onClick={() => setPomodoroActive(!pomodoroActive)}
-                      className="min-w-24"
-                    >
-                      {pomodoroActive ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-1" />
-                          Pausar
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-1" />
-                          Iniciar
-                        </>
-                      )}
+                    <Button variant={pomodoroActive ? "secondary" : "default"} size="sm"
+                      onClick={() => setPomodoroActive(!pomodoroActive)} className="min-w-24">
+                      {pomodoroActive ? <><Pause className="h-4 w-4 mr-1" /> Pausar</> : <><Play className="h-4 w-4 mr-1" /> Iniciar</>}
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => { setPomodoroTime(25 * 60); setPomodoroActive(false); }}
-                    >
+                    <Button variant="ghost" size="icon"
+                      onClick={() => { setPomodoroTime(25 * 60); setPomodoroActive(false); }}>
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                   </div>
 
                   <div className="flex justify-center gap-2">
                     {[25, 15, 5].map((time) => (
-                      <Button 
-                        key={time}
-                        variant="ghost" 
-                        size="sm" 
-                        className={cn(
-                          "h-8 px-4 text-xs rounded-full",
-                          pomodoroTime === time * 60 && 'bg-muted'
-                        )}
-                        onClick={() => { setPomodoroTime(time * 60); setPomodoroActive(false); }}
-                      >
+                      <Button key={time} variant="ghost" size="sm"
+                        className={cn("h-8 px-4 text-xs rounded-full", pomodoroTime === time * 60 && 'bg-muted')}
+                        onClick={() => { setPomodoroTime(time * 60); setPomodoroActive(false); }}>
                         {time}min
                       </Button>
                     ))}
@@ -466,9 +402,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     </div>
                     <h3 className="font-semibold">Hábitos de Hoje</h3>
                   </div>
-                  <Badge variant="secondary" className="text-xs bg-muted/50">
-                    {completedHabits}/{habits.length}
-                  </Badge>
+                  <Badge variant="secondary" className="text-xs bg-muted/50">{completedHabits}/{habits.length}</Badge>
                 </div>
                 
                 <div className="space-y-2">
@@ -476,33 +410,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     const isCompleted = isHabitCompletedOnDate(habit.id, today);
                     const streak = habit.streak || 0;
                     return (
-                      <motion.div 
-                        key={habit.id} 
-                        whileHover={{ x: 4 }}
+                      <motion.div key={habit.id} whileHover={{ x: 4 }}
                         className={cn(
                           "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
-                          isCompleted 
-                            ? 'bg-success/5 border-success/20' 
-                            : 'border-border/50 hover:border-accent/30'
+                          isCompleted ? 'bg-success/5 border-success/20' : 'border-border/50 hover:border-accent/30'
                         )}
-                        onClick={() => toggleHabitToday(habit.id)}
-                      >
+                        onClick={() => toggleHabitToday(habit.id)}>
                         <div className="flex items-center gap-3">
-                          <Checkbox 
-                            checked={isCompleted}
-                            className="data-[state=checked]:bg-success data-[state=checked]:border-success"
-                          />
-                          <span className={cn(
-                            "text-sm",
-                            isCompleted && 'text-muted-foreground'
-                          )}>
-                            {habit.title}
-                          </span>
+                          <Checkbox checked={isCompleted} className="data-[state=checked]:bg-success data-[state=checked]:border-success" />
+                          <span className={cn("text-sm", isCompleted && 'text-muted-foreground')}>{habit.title}</span>
                         </div>
                         {streak > 0 && (
                           <div className="flex items-center gap-1 text-xs text-warning">
-                            <Flame className="h-3 w-3" />
-                            <span>{streak}</span>
+                            <Flame className="h-3 w-3" /><span>{streak}</span>
                           </div>
                         )}
                       </motion.div>
@@ -522,37 +442,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                 
                 <div className="h-[180px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={weeklyData}>
-                      <defs>
-                        <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis 
-                        dataKey="day" 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      />
+                    <BarChart data={weeklyData} barSize={20}>
+                      <XAxis dataKey="day" axisLine={false} tickLine={false}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis hide />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px'
+                          borderRadius: '8px', fontSize: '12px'
                         }}
+                        formatter={(value: number) => [`${value} tarefas`, 'Concluídas']}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="tasks" 
-                        stroke="hsl(var(--accent))" 
-                        fillOpacity={1}
-                        fill="url(#colorTasks)"
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
+                      <Bar dataKey="tasks" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </Card>
@@ -566,12 +469,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     </div>
                     <h3 className="font-semibold">Metas em Progresso</h3>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 w-7 p-0"
-                    onClick={() => onNavigateToSection?.('goals')}
-                  >
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
+                    onClick={() => onNavigateToSection?.('goals')}>
                     <ArrowRight className="h-3 w-3" />
                   </Button>
                 </div>
@@ -584,12 +483,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                         <span className="text-xs text-muted-foreground ml-2 font-medium">{goal.progress || 0}%</span>
                       </div>
                       <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-gradient-to-r from-accent to-accent/70 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${goal.progress || 0}%` }}
-                          transition={{ duration: 0.5, delay: 0.2 }}
-                        />
+                        <motion.div className="h-full bg-gradient-to-r from-accent to-accent/70 rounded-full"
+                          initial={{ width: 0 }} animate={{ width: `${goal.progress || 0}%` }}
+                          transition={{ duration: 0.5, delay: 0.2 }} />
                       </div>
                     </div>
                   ))}
@@ -604,7 +500,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
               </Card>
             </motion.div>
 
-            {/* Finance Overview */}
+            {/* Finance Overview with Pie Chart */}
             <motion.div variants={itemVariants}>
               <Card className="p-5 bg-card border-border/50">
                 <div className="flex items-center justify-between mb-6">
@@ -614,19 +510,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     </div>
                     <h3 className="font-semibold">Visão Financeira do Mês</h3>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => onNavigateToSection?.('finance')}
-                  >
-                    Ver detalhes
-                    <ArrowRight className="h-3 w-3 ml-1" />
+                  <Button variant="ghost" size="sm" className="text-xs"
+                    onClick={() => onNavigateToSection?.('finance')}>
+                    Ver detalhes <ArrowRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Income */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="p-4 rounded-xl bg-success/5 border border-success/20">
                     <div className="flex items-center gap-2 mb-2">
                       <ArrowUpRight className="h-4 w-4 text-success" />
@@ -635,7 +525,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     <p className="text-2xl font-bold text-success">{formatCurrency(totalReceitas)}</p>
                   </div>
 
-                  {/* Expenses */}
                   <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20">
                     <div className="flex items-center gap-2 mb-2">
                       <ArrowDownRight className="h-4 w-4 text-destructive" />
@@ -644,24 +533,44 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     <p className="text-2xl font-bold text-destructive">{formatCurrency(totalDespesas)}</p>
                   </div>
 
-                  {/* Balance */}
                   <div className={cn(
                     "p-4 rounded-xl border",
-                    saldo >= 0 
-                      ? "bg-success/5 border-success/20" 
-                      : "bg-destructive/5 border-destructive/20"
+                    saldo >= 0 ? "bg-success/5 border-success/20" : "bg-destructive/5 border-destructive/20"
                   )}>
                     <div className="flex items-center gap-2 mb-2">
                       <DollarSign className={cn("h-4 w-4", saldo >= 0 ? "text-success" : "text-destructive")} />
                       <span className="text-xs text-muted-foreground uppercase tracking-wider">Saldo</span>
                     </div>
-                    <p className={cn(
-                      "text-2xl font-bold",
-                      saldo >= 0 ? "text-success" : "text-destructive"
-                    )}>
+                    <p className={cn("text-2xl font-bold", saldo >= 0 ? "text-success" : "text-destructive")}>
                       {formatCurrency(saldo)}
                     </p>
                   </div>
+
+                  {/* Spending Pie */}
+                  {spendingCategories.length > 0 && (
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="h-[100px] w-[100px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={spendingCategories} dataKey="value" cx="50%" cy="50%"
+                              innerRadius={28} outerRadius={45} paddingAngle={3} strokeWidth={0}>
+                              {spendingCategories.map((entry, i) => (
+                                <Cell key={i} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
+                        {spendingCategories.slice(0, 3).map((cat, i) => (
+                          <div key={i} className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                            <span className="text-[10px] text-muted-foreground">{cat.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
             </motion.div>
