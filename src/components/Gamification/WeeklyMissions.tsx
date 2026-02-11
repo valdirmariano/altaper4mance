@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Target, CheckCircle2, Clock, Sparkles, Dumbbell, DollarSign, BookOpen, Timer, Footprints, GraduationCap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Target, CheckCircle2, Clock, Sparkles, Dumbbell, DollarSign, BookOpen, Timer, Footprints, GraduationCap, Trophy } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useHabits } from '@/hooks/useHabits';
 import { useGamification } from '@/hooks/useGamification';
@@ -113,8 +114,6 @@ const WeeklyMissions: React.FC = () => {
   const courseStats = getCourseStats();
   const coursesInProgress = courseStats.inProgress;
   const coursesCompleted = courseStats.completed;
-
-  // Streak progress
   const streakProgress = Math.min(stats.streak, 7);
 
   // Generate dynamic missions based on user activity
@@ -271,9 +270,7 @@ const WeeklyMissions: React.FC = () => {
     return activeMissions.sort((a, b) => {
       if (a.completed && !b.completed) return 1;
       if (!a.completed && b.completed) return -1;
-      const progressA = a.current / a.target;
-      const progressB = b.current / b.target;
-      return progressB - progressA;
+      return (b.current / b.target) - (a.current / a.target);
     });
   }, [tasksThisWeek, streakProgress, stats.streak, perfectDays, workoutsThisWeek, runsThisWeek, kmThisWeek, pomodoroThisWeek, transactionsThisWeek, coursesInProgress, coursesCompleted]);
 
@@ -286,88 +283,134 @@ const WeeklyMissions: React.FC = () => {
 
   const getCategoryColor = (category: Mission['category']) => {
     switch (category) {
-      case 'tasks': return 'text-primary';
-      case 'habits': return 'text-warning';
-      case 'fitness': return 'text-success';
-      case 'finance': return 'text-accent';
-      case 'focus': return 'text-destructive';
-      case 'studies': return 'text-info';
+      case 'tasks': return 'text-accent';
+      case 'habits': return 'text-yellow-400';
+      case 'fitness': return 'text-emerald-400';
+      case 'finance': return 'text-blue-400';
+      case 'focus': return 'text-red-400';
+      case 'studies': return 'text-purple-400';
       default: return 'text-muted-foreground';
     }
   };
 
-  return (
-    <Card className="p-6 bg-card border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-success" />
-          <h3 className="font-semibold">Missões Semanais</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs">
-            {completedMissions}/{missions.length}
-          </Badge>
-          <Badge variant="outline" className="text-xs flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {daysRemaining} dias
-          </Badge>
-        </div>
-      </div>
+  const getCategoryBg = (category: Mission['category']) => {
+    switch (category) {
+      case 'tasks': return 'bg-accent/15';
+      case 'habits': return 'bg-yellow-400/15';
+      case 'fitness': return 'bg-emerald-400/15';
+      case 'finance': return 'bg-blue-400/15';
+      case 'focus': return 'bg-red-400/15';
+      case 'studies': return 'bg-purple-400/15';
+      default: return 'bg-muted/30';
+    }
+  };
 
-      <div className="space-y-3">
-        {missions.map((mission) => {
-          const progress = (mission.current / mission.target) * 100;
-          
-          return (
-            <div 
-              key={mission.id}
-              className={`p-3 rounded-lg border transition-all ${
-                mission.completed 
-                  ? 'bg-success/10 border-success/30' 
-                  : 'bg-muted/30 border-border hover:border-muted-foreground/30'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-md ${
-                    mission.completed 
-                      ? 'bg-success/20 text-success' 
-                      : `bg-muted ${getCategoryColor(mission.category)}`
-                  }`}>
-                    {mission.icon}
-                  </div>
-                  <span className={`text-sm font-medium ${
-                    mission.completed ? 'text-success line-through' : ''
-                  }`}>
-                    {mission.title}
-                  </span>
-                </div>
-                <Badge 
-                  variant={mission.completed ? "default" : "outline"} 
-                  className={`text-xs ${mission.completed ? 'bg-success text-success-foreground' : ''}`}
-                >
-                  {mission.completed ? '✓' : `+${mission.xpReward} XP`}
-                </Badge>
-              </div>
-              <Progress 
-                value={progress} 
-                className={`h-2 ${mission.completed ? '[&>div]:bg-success' : ''}`}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {mission.current}/{mission.target} - {mission.description}
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="p-6 bg-card/60 backdrop-blur-sm border-border/50">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-accent/15">
+              <Trophy className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Missões Semanais</h3>
+              <p className="text-[11px] text-muted-foreground">
+                {completedMissions}/{missions.length} concluídas
               </p>
             </div>
-          );
-        })}
-      </div>
-
-      {completedMissions > 0 && (
-        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">XP ganho esta semana:</span>
-          <span className="text-lg font-bold text-success">+{totalXP} XP</span>
+          </div>
+          <Badge variant="outline" className="text-xs flex items-center gap-1 border-border/50 bg-muted/30">
+            <Clock className="h-3 w-3" />
+            {daysRemaining}d restantes
+          </Badge>
         </div>
-      )}
-    </Card>
+
+        {/* Overall Progress */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">Progresso geral</span>
+            <span className="text-xs font-medium text-accent">
+              {missions.length > 0 ? Math.round((completedMissions / missions.length) * 100) : 0}%
+            </span>
+          </div>
+          <Progress 
+            value={missions.length > 0 ? (completedMissions / missions.length) * 100 : 0} 
+            className="h-2"
+          />
+        </div>
+
+        {/* Missions List */}
+        <div className="space-y-2.5">
+          <AnimatePresence>
+            {missions.map((mission, index) => {
+              const progress = (mission.current / mission.target) * 100;
+              
+              return (
+                <motion.div 
+                  key={mission.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  className={`p-3 rounded-xl border transition-all duration-300 ${
+                    mission.completed 
+                      ? 'bg-emerald-500/10 border-emerald-500/20' 
+                      : 'bg-muted/20 border-border/30 hover:border-border/60'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-1.5 rounded-lg ${
+                        mission.completed 
+                          ? 'bg-emerald-500/20 text-emerald-400' 
+                          : `${getCategoryBg(mission.category)} ${getCategoryColor(mission.category)}`
+                      }`}>
+                        {mission.icon}
+                      </div>
+                      <span className={`text-sm font-medium ${
+                        mission.completed ? 'text-emerald-400 line-through' : ''
+                      }`}>
+                        {mission.title}
+                      </span>
+                    </div>
+                    <Badge 
+                      variant={mission.completed ? "default" : "outline"} 
+                      className={`text-[10px] ${mission.completed ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'border-border/50'}`}
+                    >
+                      {mission.completed ? '✓ Feito' : `+${mission.xpReward} XP`}
+                    </Badge>
+                  </div>
+                  <Progress 
+                    value={progress} 
+                    className={`h-1.5 ${mission.completed ? '[&>div]:bg-emerald-500' : ''}`}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1.5">
+                    {mission.current}/{mission.target} — {mission.description}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer XP Summary */}
+        {completedMissions > 0 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-5 pt-4 border-t border-border/30 flex items-center justify-between"
+          >
+            <span className="text-sm text-muted-foreground">XP ganho esta semana</span>
+            <span className="text-lg font-bold text-accent">+{totalXP} XP</span>
+          </motion.div>
+        )}
+      </Card>
+    </motion.div>
   );
 };
 
